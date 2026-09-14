@@ -386,10 +386,10 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "linkHost",
+        "name": "linkHosts",
         "in": "query",
         "type": "array",
-        "description": "Only posts linking to any of these hosts, matched exactly and without `www.` (docs.mentio.dev). Repeatable, or comma-separated.",
+        "description": "Only posts linking to any of these hosts, the host itself or a subdomain of it (octolens.com also matches blog.octolens.com). Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -592,10 +592,10 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "linkHost",
+        "name": "linkHosts",
         "in": "query",
         "type": "array",
-        "description": "Only posts linking to any of these hosts, matched exactly and without `www.` (docs.mentio.dev). Repeatable, or comma-separated.",
+        "description": "Only posts linking to any of these hosts, the host itself or a subdomain of it (octolens.com also matches blog.octolens.com). Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -798,6 +798,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "linkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "People with at least one mention linking to any of these hosts, the host itself or a subdomain of it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "sort",
         "in": "query",
         "type": "string",
@@ -982,6 +990,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "integer",
         "description": "First seen within this many days.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "linkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "People with at least one mention linking to any of these hosts, the host itself or a subdomain of it. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
