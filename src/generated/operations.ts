@@ -386,6 +386,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "linkHost",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts linking to any of these hosts, matched exactly and without `www.` (docs.mentio.dev). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
@@ -580,6 +588,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only authors your workspace tagged with any of these (exact, case-sensitive). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "linkHost",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts linking to any of these hosts, matched exactly and without `www.` (docs.mentio.dev). Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -1580,6 +1596,70 @@ export const OPERATIONS: readonly CliOperation[] = [
       }
     ],
     "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "muteAlertAuthors",
+    "method": "POST",
+    "path": "/v1/alerts/{id}/mute",
+    "summary": "Mute authors on an alert",
+    "description": "Add authors to the alert's muted list without touching the rest of its filter. Links are read the way the dashboard reads them: a post link mutes its author, twitter.com becomes x.com, a Hacker News profile keeps its id. Authors already muted are skipped, so a retry is safe. An entry that names no person (a subreddit, a story) rejects the request with that entry named.",
+    "tag": "Alerts",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Alert id (feed_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "description": "Authors to add to or remove from the alert's muted list.",
+      "fields": [
+        {
+          "name": "authors",
+          "type": "array",
+          "description": "Profile or post links (x.com/name, linkedin.com/in/name, reddit.com/user/name, a post URL), handles (@name, u/name), Bluesky DIDs or display names. A link is stored as the author's profile; a plain name or handle matches that name on every platform.",
+          "required": true,
+          "nullable": false,
+          "items": "string"
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "unmuteAlertAuthors",
+    "method": "POST",
+    "path": "/v1/alerts/{id}/unmute",
+    "summary": "Unmute authors on an alert",
+    "description": "Remove authors from the alert's muted list without touching the rest of its filter. Name each one by the stored entry or by any link to that profile or its posts. Authors that are not muted are ignored, so a retry is safe.",
+    "tag": "Alerts",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Alert id (feed_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "description": "Authors to add to or remove from the alert's muted list.",
+      "fields": [
+        {
+          "name": "authors",
+          "type": "array",
+          "description": "Profile or post links (x.com/name, linkedin.com/in/name, reddit.com/user/name, a post URL), handles (@name, u/name), Bluesky DIDs or display names. A link is stored as the author's profile; a plain name or handle matches that name on every platform.",
+          "required": true,
+          "nullable": false,
+          "items": "string"
+        }
+      ]
+    },
     "response": "json"
   },
   {
