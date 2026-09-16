@@ -394,6 +394,120 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "platforms",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts from any of these platforms.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts from these platforms.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of any of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "sentiments",
+        "in": "query",
+        "type": "array",
+        "description": "Only these sentiments.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notSentiments",
+        "in": "query",
+        "type": "array",
+        "description": "Never these sentiments. A mention the classifier has not scored yet still passes.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "intents",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions carrying any of these intents.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notIntents",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions carrying these intents.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLinkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts linking to these hosts, the host itself or a subdomain of it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notTags",
+        "in": "query",
+        "type": "array",
+        "description": "Never authors your workspace tagged with any of these.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
@@ -600,6 +714,120 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "platforms",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts from any of these platforms.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts from these platforms.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of any of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "sentiments",
+        "in": "query",
+        "type": "array",
+        "description": "Only these sentiments.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notSentiments",
+        "in": "query",
+        "type": "array",
+        "description": "Never these sentiments. A mention the classifier has not scored yet still passes.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "intents",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions carrying any of these intents.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notIntents",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions carrying these intents.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLinkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts linking to these hosts, the host itself or a subdomain of it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notTags",
+        "in": "query",
+        "type": "array",
+        "description": "Never authors your workspace tagged with any of these.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
@@ -760,6 +988,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "At least one mention carrying any of these intents.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody with an account on these platforms. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notTags",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody carrying any of these tags. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notIntents",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody whose mentions carry any of these intents. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -980,6 +1244,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "At least one mention carrying any of these intents.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody with an account on these platforms. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notTags",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody carrying any of these tags. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notIntents",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody whose mentions carry any of these intents. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
