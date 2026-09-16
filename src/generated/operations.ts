@@ -322,6 +322,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "automated",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only mentions that read as machine-made (a bot account, a scheduled or templated post, AI-written text); false: only the rest, mentions judged before this existed included. Omitted: everything.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "personId",
         "in": "query",
         "type": "string",
@@ -638,6 +646,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Only mentions carrying this intent (buy_intent, question, complaint, praise, comparison).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "automated",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only mentions that read as machine-made (a bot account, a scheduled or templated post, AI-written text); false: only the rest, mentions judged before this existed included. Omitted: everything.",
         "required": false,
         "nullable": false
       },
@@ -1086,6 +1102,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "automated",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only people whose matched posts are mostly machine-made (bot accounts); false: only the rest; omitted: everyone.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "ownerIds",
         "in": "query",
         "type": "array",
@@ -1116,7 +1140,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people",
     "summary": "List people",
-    "description": "The people behind your mentions: one row per person, with their accounts, reach, public profile, per-workspace stats, your annotations and where your outreach stands. Filter by platform, tag, follower range, mention counts, intents seen, keyword kinds mentioned or never mentioned, outreach stage, owner, or a saved segment. Offset-paginated with a total.",
+    "description": "The people behind your mentions: one row per person, with their accounts, reach, public profile, per-workspace stats, your annotations and where your outreach stands. Filter by platform, tag, follower range, mention counts, intents seen, keyword kinds mentioned or never mentioned, outreach stage, owner, automated (bot accounts, whose matched posts are mostly machine-made), or a saved segment. Offset-paginated with a total.",
     "tag": "People",
     "params": [
       {
@@ -1338,6 +1362,14 @@ export const OPERATIONS: readonly CliOperation[] = [
           "customer",
           "not_a_fit"
         ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "automated",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only people whose matched posts are mostly machine-made (bot accounts); false: only the rest; omitted: everyone.",
         "required": false,
         "nullable": false
       },
