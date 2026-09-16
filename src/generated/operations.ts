@@ -632,7 +632,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people/export.csv",
     "summary": "Export people as CSV",
-    "description": "The same list as GET /v1/people (segmentId included) as CSV, one row per person with their contact columns: handle, followers, email, website, company, location, tags. Capped at 5,000 people. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "The same list as GET /v1/people (segmentId included) as CSV, one row per person with their contact columns: handle, followers, email, website, company, location, tags, then outreach stage, owner and last contacted. Capped at 5,000 people. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
     "tag": "People",
     "params": [
       {
@@ -802,6 +802,30 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "People with at least one mention linking to any of these hosts, the host itself or a subdomain of it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "stages",
+        "in": "query",
+        "type": "array",
+        "description": "People at any of these outreach stages. Repeatable, or comma-separated.",
+        "enum": [
+          "not_contacted",
+          "contacted",
+          "replied",
+          "in_talks",
+          "customer",
+          "not_a_fit"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "ownerIds",
+        "in": "query",
+        "type": "array",
+        "description": "People owned by any of these members (user ids); `none` matches people nobody owns. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -828,7 +852,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people",
     "summary": "List people",
-    "description": "The people behind your mentions: one row per person, with their accounts, reach, public profile, per-workspace stats and your annotations. Filter by platform, tag, follower range, mention counts, intents seen, keyword kinds mentioned or never mentioned, or a saved segment. Offset-paginated with a total.",
+    "description": "The people behind your mentions: one row per person, with their accounts, reach, public profile, per-workspace stats, your annotations and where your outreach stands. Filter by platform, tag, follower range, mention counts, intents seen, keyword kinds mentioned or never mentioned, outreach stage, owner, or a saved segment. Offset-paginated with a total.",
     "tag": "People",
     "params": [
       {
@@ -998,6 +1022,30 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "People with at least one mention linking to any of these hosts, the host itself or a subdomain of it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "stages",
+        "in": "query",
+        "type": "array",
+        "description": "People at any of these outreach stages. Repeatable, or comma-separated.",
+        "enum": [
+          "not_contacted",
+          "contacted",
+          "replied",
+          "in_talks",
+          "customer",
+          "not_a_fit"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "ownerIds",
+        "in": "query",
+        "type": "array",
+        "description": "People owned by any of these members (user ids); `none` matches people nobody owns. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -1060,7 +1108,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/people/{id}",
     "summary": "Update your annotations on a person",
-    "description": "Tags, notes and mute, for your workspace only. Mute hides their posts from your feed and every channel; ingest and billing never change.",
+    "description": "Tags, notes, mute, and the outreach owner (a workspace member; null clears) and stage, for your workspace only. Mute hides their posts from your feed and every channel; ingest and billing never change.",
     "tag": "People",
     "params": [
       {
@@ -1094,6 +1142,28 @@ export const OPERATIONS: readonly CliOperation[] = [
           "type": "boolean",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "ownerId",
+          "type": "string",
+          "description": "The member who owns the contact (user id); null clears.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "stage",
+          "type": "string",
+          "description": "Where your workspace stands with the person: not_contacted, contacted, replied, in_talks, customer or not_a_fit.",
+          "enum": [
+            "not_contacted",
+            "contacted",
+            "replied",
+            "in_talks",
+            "customer",
+            "not_a_fit"
+          ],
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -1104,7 +1174,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/merge",
     "summary": "Merge an account into a person",
-    "description": "Declare that this account and another person are the same human, for your workspace only. Their mentions, tags and notes combine under the person named by `into`.",
+    "description": "Declare that this account and another person are the same human, for your workspace only. Their mentions, tags, notes and outreach activities combine under the person named by `into`, which keeps its owner and stage unless it had none.",
     "tag": "People",
     "params": [
       {
@@ -1148,6 +1218,116 @@ export const OPERATIONS: readonly CliOperation[] = [
     ],
     "body": null,
     "response": "json"
+  },
+  {
+    "operationId": "listPersonActivities",
+    "method": "GET",
+    "path": "/v1/people/{id}/activities",
+    "summary": "List outreach activities",
+    "description": "Every logged contact with this person across all their accounts, newest first (at most 200): who reached out, the channel, when, and a short note. Read it before reaching out so two teammates never contact the same person without knowing.",
+    "tag": "People",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Person id (aut_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "logPersonActivity",
+    "method": "POST",
+    "path": "/v1/people/{id}/activities",
+    "summary": "Log an outreach activity",
+    "description": "Record that a teammate reached out to this person: an email, a DM, a call. The first activity claims an unowned person for whoever reached out and moves not_contacted to contacted; an existing owner and a later stage are kept. `memberId` defaults to the signed-in member; an API key that omits it logs an unattributed activity, which claims nobody.",
+    "tag": "People",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Person id (aut_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "channel",
+          "type": "string",
+          "description": "How they were reached: email, x, linkedin, bluesky, reddit, github, call, meeting or other.",
+          "enum": [
+            "email",
+            "x",
+            "linkedin",
+            "bluesky",
+            "reddit",
+            "github",
+            "call",
+            "meeting",
+            "other"
+          ],
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "description": "What was sent or said, briefly.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "occurredAt",
+          "type": "string",
+          "description": "When the contact happened (ISO 8601, or epoch ms). Defaults to now.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "memberId",
+          "type": "string",
+          "description": "The member who reached out (user id). Defaults to the signed-in member; an API key that omits it logs an unattributed activity.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deletePersonActivity",
+    "method": "DELETE",
+    "path": "/v1/people/{id}/activities/{activityId}",
+    "summary": "Delete an outreach activity",
+    "description": "Remove a contact logged by mistake. The person's owner and stage stay as they are.",
+    "tag": "People",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Person id (aut_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "activityId",
+        "in": "path",
+        "type": "string",
+        "description": "Activity id (act_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
   },
   {
     "operationId": "listSegments",

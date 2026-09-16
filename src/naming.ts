@@ -12,6 +12,9 @@
  *   DELETE /v1/api-keys/{id}            -> api-keys:revoke  (operationId starts with revoke)
  *   POST   /v1/people/{id}/merge        -> people:merge
  *   GET    /v1/channels/{id}/deliveries -> channels:deliveries
+ *   GET    /v1/people/{id}/activities   -> people:activities
+ *   POST   /v1/people/{id}/activities   -> people:log-activity     (see NAMED_VERBS)
+ *   DELETE /v1/people/{id}/activities/{activityId} -> people:delete-activity
  *   GET    /v1/analytics/summary        -> analytics:summary
  *   GET    /v1/mentions/export.csv      -> mentions:export
  *   GET    /v1/company                  -> company:get
@@ -23,10 +26,24 @@ export interface OperationRef {
   path: string;
 }
 
+/**
+ * A sub-collection under a resource (the outreach log) has three operations
+ * over two paths, and the path segment alone would name all three
+ * `people:activities`. These verbs say what each one does; the noun stays
+ * the resource, so they still list under `people`.
+ */
+const NAMED_VERBS: Record<string, string> = {
+  listPersonActivities: 'activities',
+  logPersonActivity: 'log-activity',
+  deletePersonActivity: 'delete-activity',
+};
+
 export function commandName(op: OperationRef): string {
   const segments = op.path.replace(/^\/v1\//, '').split('/');
   const noun = segments[0] ?? '';
   if (noun === 'health') return 'system:health';
+  const named = NAMED_VERBS[op.operationId];
+  if (named !== undefined) return `${noun}:${named}`;
   const rest = segments.slice(1);
   const hasId = rest.some((s) => s.startsWith('{'));
   const action = rest.find((s) => !s.startsWith('{'));

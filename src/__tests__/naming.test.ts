@@ -43,9 +43,12 @@ describe('commandName', () => {
         'mentions:get',
         'mentions:search',
         'mentions:update',
+        'people:activities',
+        'people:delete-activity',
         'people:export',
         'people:get',
         'people:list',
+        'people:log-activity',
         'people:merge',
         'people:split',
         'people:update',
@@ -66,6 +69,16 @@ describe('commandName', () => {
     expect(commandName({ operationId: 'deleteThing', method: 'delete', path: '/v1/things/{id}' })).toBe('things:delete');
     expect(commandName({ operationId: 'exportMentionsCsv', method: 'get', path: '/v1/mentions/export.csv' })).toBe('mentions:export');
     expect(commandName({ operationId: 'getHealth', method: 'get', path: '/v1/health' })).toBe('system:health');
+    // A sub-collection: the path segment alone would name all three the same.
+    expect(commandName({ operationId: 'listPersonActivities', method: 'get', path: '/v1/people/{id}/activities' })).toBe(
+      'people:activities',
+    );
+    expect(commandName({ operationId: 'logPersonActivity', method: 'post', path: '/v1/people/{id}/activities' })).toBe(
+      'people:log-activity',
+    );
+    expect(
+      commandName({ operationId: 'deletePersonActivity', method: 'delete', path: '/v1/people/{id}/activities/{activityId}' }),
+    ).toBe('people:delete-activity');
     expect(commandGroup('channels:rotate-secret')).toBe('channels');
   });
 });
