@@ -17,8 +17,9 @@
  *   DELETE /v1/people/{id}/activities/{activityId} -> people:delete-activity
  *   GET    /v1/analytics/summary        -> analytics:summary
  *   GET    /v1/mentions/export.csv      -> mentions:export
- *   GET    /v1/company                  -> company:get
+ *   GET    /v1/company                  -> company:get      (a singleton, like /v1/filters)
  *   GET    /v1/health                   -> system:health
+ *   GET    /v1/whoami                   -> auth:whoami
  */
 export interface OperationRef {
   operationId: string;
@@ -36,12 +37,23 @@ const NAMED_VERBS: Record<string, string> = {
   listPersonActivities: 'activities',
   logPersonActivity: 'log-activity',
   deletePersonActivity: 'delete-activity',
+  // The team: one path for the invitations with three verbs, and "remove"
+  // for a member (a person is removed, not deleted).
+  listInvitations: 'invitations',
+  createInvitation: 'invite',
+  revokeInvitation: 'revoke-invitation',
+  removeMember: 'remove',
 };
+
+/** Resources with one instance per workspace: a GET on the collection path
+ *  reads it, so the verb is `get`, not `list`. */
+const SINGLETONS = new Set(['company', 'filters', 'usage']);
 
 export function commandName(op: OperationRef): string {
   const segments = op.path.replace(/^\/v1\//, '').split('/');
   const noun = segments[0] ?? '';
   if (noun === 'health') return 'system:health';
+  if (noun === 'whoami') return 'auth:whoami';
   const named = NAMED_VERBS[op.operationId];
   if (named !== undefined) return `${noun}:${named}`;
   const rest = segments.slice(1);
@@ -52,7 +64,7 @@ export function commandName(op: OperationRef): string {
   if (action !== undefined) {
     verb = action === 'export.csv' ? 'export' : action;
   } else if (method === 'get' && !hasId) {
-    verb = op.operationId.startsWith('search') ? 'search' : noun === 'company' ? 'get' : 'list';
+    verb = op.operationId.startsWith('search') ? 'search' : SINGLETONS.has(noun) ? 'get' : 'list';
   } else if (method === 'post' && !hasId) {
     verb = 'create';
   } else if (method === 'get') {

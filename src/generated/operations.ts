@@ -17,7 +17,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/keywords",
     "summary": "Track a keyword",
-    "description": "Start tracking a word or phrase. Matching, classification and delivery begin on the next poll. A funded workspace tracks up to 500 keywords; each costs $5 per month, deducted daily from the balance.",
+    "description": "Start tracking a word or phrase. Matching, classification and delivery begin on the next poll. A funded workspace tracks up to 500 keywords; each costs $5 per month, deducted daily from the balance. `matching` narrows what the term matches (required and excluded terms, excluded authors, case) before a mention is stored, so a rejected post is never billed; `context` is a sentence the classifier reads for this keyword only.",
     "tag": "Keywords",
     "params": [],
     "body": {
@@ -60,6 +60,20 @@ export const OPERATIONS: readonly CliOperation[] = [
           "required": false,
           "nullable": true,
           "items": "string"
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "A sentence the classifier reads for this keyword only, on top of the company profile (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "matching",
+          "type": "object",
+          "description": "Omitted fields are untouched; an empty list clears one.",
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -100,7 +114,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/keywords/{id}",
     "summary": "Update a keyword",
-    "description": "Mute or unmute it, or change the platforms it is tracked on.",
+    "description": "Mute or unmute it, reclassify it (`kind`), change the platforms it is tracked on, its classifier `context`, or its `matching` rules (each rule field optional; an empty list clears one). Rules apply to new mentions from the next poll; stored mentions are untouched.",
     "tag": "Keywords",
     "params": [
       {
@@ -115,6 +129,18 @@ export const OPERATIONS: readonly CliOperation[] = [
     "body": {
       "description": "Omitted fields are untouched.",
       "fields": [
+        {
+          "name": "kind",
+          "type": "string",
+          "description": "Reclassify it as brand, competitor or topic.",
+          "enum": [
+            "brand",
+            "competitor",
+            "topic"
+          ],
+          "required": false,
+          "nullable": false
+        },
         {
           "name": "muted",
           "type": "boolean",
@@ -141,6 +167,20 @@ export const OPERATIONS: readonly CliOperation[] = [
           "required": false,
           "nullable": true,
           "items": "string"
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "A sentence the classifier reads for this keyword only, on top of the company profile (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "matching",
+          "type": "object",
+          "description": "Omitted fields are untouched; an empty list clears one.",
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -167,11 +207,68 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "getFilters",
+    "method": "GET",
+    "path": "/v1/filters",
+    "summary": "Get the workspace filters",
+    "description": "The noise rules applied to every keyword before a mention is stored: excluded terms and authors, excluded GitHub repositories, and the subreddits Reddit posts may (or may not) come from. A post they reject is never classified, delivered or billed. Keyword-level rules live on each keyword (`matching`); both apply.",
+    "tag": "Filters",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateFilters",
+    "method": "PATCH",
+    "path": "/v1/filters",
+    "summary": "Update the workspace filters",
+    "description": "Replace any of the lists; an omitted list is untouched and an empty one clears it. Entries are stored in canonical form (terms lowercased, authors as profile links or bare names, repositories as owner/name, subreddits without r/). Takes effect on new mentions within a minute; stored mentions are untouched.",
+    "tag": "Filters",
+    "params": [],
+    "body": {
+      "description": "Omitted fields are untouched; an empty list clears one.",
+      "fields": [
+        {
+          "name": "excludedTerms",
+          "type": "array",
+          "description": "Replaces the list; [] clears it.",
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "excludedAuthors",
+          "type": "array",
+          "description": "Replaces the list; [] clears it.",
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "excludedRepos",
+          "type": "array",
+          "description": "Replaces the list; [] clears it.",
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "subreddits",
+          "type": "object",
+          "description": "Reddit only; an omitted list is untouched.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
     "operationId": "updateMention",
     "method": "PATCH",
     "path": "/v1/mentions/{id}",
     "summary": "Update a mention",
-    "description": "The one write on a mention. Set status to ignored or done to handle it (open puts it back), assign it to a workspace member, snooze it out of the feed, or leave an internal note. Null clears a field; omitted fields are untouched. Delivery and billing never change.",
+    "description": "The one write on a mention. Set status to ignored or done to handle it (open puts it back), assign it to a workspace member, snooze it out of the feed, leave an internal note, or correct the classifier: `relevant` true or false is your verdict (relevance becomes 100 or 0, and every list, filter, digest and report follows it), `sentiment` replaces the label; null withdraws a verdict and restores the classifier's value. Omitted fields are untouched. Delivery and billing never change.",
     "tag": "Mentions",
     "params": [
       {
@@ -218,6 +315,25 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Internal note; null or empty clears it.",
           "required": false,
           "nullable": true
+        },
+        {
+          "name": "relevant",
+          "type": "boolean",
+          "description": "Your verdict on relevance, correcting the classifier: true sets relevance to 100 and puts a filtered mention back in the relevant feed, false sets it to 0 and takes it out; null withdraws the verdict and restores the classifier's score. Never billed or unbilled. A mention still being classified answers 409 classification_pending.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "sentiment",
+          "type": "string",
+          "description": "Your corrected sentiment; null withdraws the correction and restores the classifier's.",
+          "enum": [
+            "positive",
+            "neutral",
+            "negative"
+          ],
+          "required": false,
+          "nullable": true
         }
       ]
     },
@@ -248,7 +364,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions",
     "summary": "List mentions",
-    "description": "Mentions matched to your keywords, filtered and paginated. Default order is newest match first; sort=priority ranks the last 30 days of matches by attention score. Page with nextCursor, passing the same filters and sort. A mention is one post matched to one keyword.",
+    "description": "Mentions matched to your keywords, filtered and paginated. Default order is newest match first; sort=priority ranks the last 30 days of matches by attention score. Page with nextCursor, passing the same filters and sort. A mention is one post matched to one keyword. alertId applies an alert rule's filter on top of the others: the same mentions that rule would send.",
     "tag": "Mentions",
     "params": [
       {
@@ -386,6 +502,30 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "maxFollowers",
+        "in": "query",
+        "type": "integer",
+        "description": "Only authors with at most this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "isReply",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only replies and comments (posts answering another post); false: only top-level posts. Omitted: both.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "alertId",
+        "in": "query",
+        "type": "string",
+        "description": "Apply an alert rule's filter (an id from GET /v1/alerts) on top of the other filters: the same mentions the rule would send, for a feed-shaped export or a preview. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "tags",
         "in": "query",
         "type": "array",
@@ -516,10 +656,26 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "languages",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts in any of these languages (ISO 639-1: en, es, de). A post whose language is unknown never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLanguages",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts in these languages. A post whose language is unknown still passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
-        "description": "Substring search in the post text.",
+        "description": "Substring search in the post text or the author's name.",
         "required": false,
         "nullable": false
       },
@@ -714,6 +870,30 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "maxFollowers",
+        "in": "query",
+        "type": "integer",
+        "description": "Only authors with at most this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "isReply",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only replies and comments (posts answering another post); false: only top-level posts. Omitted: both.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "alertId",
+        "in": "query",
+        "type": "string",
+        "description": "Apply an alert rule's filter (an id from GET /v1/alerts) on top of the other filters: the same mentions the rule would send, for a feed-shaped export or a preview. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "tags",
         "in": "query",
         "type": "array",
@@ -844,10 +1024,26 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "languages",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts in any of these languages (ISO 639-1: en, es, de). A post whose language is unknown never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLanguages",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts in these languages. A post whose language is unknown still passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
-        "description": "Substring search in the post text.",
+        "description": "Substring search in the post text or the author's name.",
         "required": false,
         "nullable": false
       },
@@ -1833,6 +2029,28 @@ export const OPERATIONS: readonly CliOperation[] = [
           "nullable": false
         },
         {
+          "name": "website",
+          "type": "string",
+          "description": "The company website; null clears it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "competitors",
+          "type": "array",
+          "description": "Replaces the whole list; [] clears it.",
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "guidelines",
+          "type": "string",
+          "description": "Free-text rules for the classifier; null clears them.",
+          "required": false,
+          "nullable": true
+        },
+        {
           "name": "context",
           "type": "string",
           "description": "Overrides the composed context until the next profile edit.",
@@ -1848,7 +2066,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/api-keys",
     "summary": "Create an API key",
-    "description": "Mint a key for this workspace. The key itself is returned once; only its hash is stored.",
+    "description": "Mint a key for this workspace. The key itself is returned once; only its hash is stored. `expiresAt` makes it stop working at an instant (a key for a contractor or a one-off script); it stays listed until revoked.",
     "tag": "API keys",
     "params": [],
     "body": {
@@ -1868,6 +2086,13 @@ export const OPERATIONS: readonly CliOperation[] = [
             "read",
             "write"
           ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "expiresAt",
+          "type": "string",
+          "description": "When the key stops working (ISO 8601, or epoch ms), for a key handed to a script or a contractor. Must be in the future. Omit or null for a key that never expires.",
           "required": false,
           "nullable": false
         }
@@ -1904,6 +2129,122 @@ export const OPERATIONS: readonly CliOperation[] = [
     ],
     "body": null,
     "response": "none"
+  },
+  {
+    "operationId": "whoami",
+    "method": "GET",
+    "path": "/v1/whoami",
+    "summary": "Introspect the credential",
+    "description": "The workspace this credential acts on, how the request authenticated (an API key, an OAuth access token from an MCP sign-in, or the dashboard session), whether it may write, and for a key its id and expiry. Run it first: a read key answers 403 read_only_key on every write, and a wrong workspace is the classic scripting mistake.",
+    "tag": "Auth",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "listMembers",
+    "method": "GET",
+    "path": "/v1/members",
+    "summary": "List members",
+    "description": "Everyone in the workspace, owners first. `userId` is what a mention's assigneeId and a person's ownerId take.",
+    "tag": "Members",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "listInvitations",
+    "method": "GET",
+    "path": "/v1/members/invitations",
+    "summary": "List pending invitations",
+    "description": "Invitations sent and not yet accepted, declined or expired. An accepted one appears in GET /v1/members instead.",
+    "tag": "Members",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createInvitation",
+    "method": "POST",
+    "path": "/v1/members/invitations",
+    "summary": "Invite a member",
+    "description": "Send an email invitation to join the workspace as admin or member; it expires after 48 hours. Idempotent: an address that already holds an open invitation gets it back with 200 and no second email. An address that is already a member is a 409 already_member. Team changes need a signed-in owner or admin (an OAuth token from an MCP sign-in, or the dashboard session): an API key answers 403.",
+    "tag": "Members",
+    "params": [],
+    "body": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "string",
+          "description": "The address to invite; it receives an email with a link to join.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "description": "The role they join with. Ownership is only handed over in the dashboard.",
+          "enum": [
+            "admin",
+            "member"
+          ],
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "revokeInvitation",
+    "method": "DELETE",
+    "path": "/v1/members/invitations/{id}",
+    "summary": "Revoke an invitation",
+    "description": "The link in the email stops working at once. Needs a signed-in owner or admin; an API key answers 403.",
+    "tag": "Members",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Invitation id (inv_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "removeMember",
+    "method": "DELETE",
+    "path": "/v1/members/{id}",
+    "summary": "Remove a member",
+    "description": "The person loses the workspace within a minute (their dashboard session on the next request, an OAuth token when its short cache lapses). Their mentions, notes and outreach stay. Needs a signed-in owner or admin; only an owner removes another owner, and the last owner cannot be removed (409 last_owner).",
+    "tag": "Members",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Membership id (mem_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "getUsage",
+    "method": "GET",
+    "path": "/v1/usage",
+    "summary": "Get usage and balance",
+    "description": "The prepaid balance (ledger, pending mention charges, and the effective balance the stop rule reads), the daily burn and the days it buys, the keywords the wallet runs and pauses, the matches recorded today and over 30 days, and whether tracking is stopped or the balance is low. Every matched mention bills ($0.008), relevant or not; every active keyword bills $5 a month, charged daily.",
+    "tag": "Usage",
+    "params": [],
+    "body": null,
+    "response": "json"
   },
   {
     "operationId": "getAlert",
@@ -1960,7 +2301,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "type": "string",
           "enum": [
             "instant",
-            "daily"
+            "daily",
+            "weekly"
           ],
           "required": false,
           "nullable": false
@@ -2030,6 +2372,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/alerts",
     "summary": "Create an alert",
+    "description": "A rule (what to watch, the filter) times channels. mode instant sends each matching mention as it happens; daily sends one digest at schedule.hour in schedule.timezone; weekly sends one a week on schedule.weekday (0 Sunday to 6 Saturday).",
     "tag": "Alerts",
     "params": [],
     "body": {
@@ -2051,7 +2394,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "type": "string",
           "enum": [
             "instant",
-            "daily"
+            "daily",
+            "weekly"
           ],
           "required": false,
           "nullable": false
@@ -2065,7 +2409,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "schedule",
           "type": "object",
-          "description": "Required for daily alerts.",
+          "description": "Required for daily and weekly alerts (weekly ones also need schedule.weekday).",
           "required": false,
           "nullable": false
         },
@@ -2362,10 +2706,12 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "bucket",
         "in": "query",
         "type": "string",
-        "description": "Point granularity. Default: day up to 90 days, week beyond. Weeks start on Monday.",
+        "description": "Point granularity: hour (windows of at most 14 days), day, week (Monday start) or month. Default: day up to 90 days, week beyond.",
         "enum": [
+          "hour",
           "day",
-          "week"
+          "week",
+          "month"
         ],
         "required": false,
         "nullable": false
@@ -2374,10 +2720,11 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "Split into one series per platform or per keyword (the top 20 by matched, the rest folded into \"other\"). Omit for one total series.",
+        "description": "Split into one series per platform, per keyword (the top 20 by matched, the rest folded into \"other\") or per sentiment (positive, neutral, negative, unclassified). Omit for one total series.",
         "enum": [
           "platform",
-          "keyword"
+          "keyword",
+          "sentiment"
         ],
         "required": false,
         "nullable": false
@@ -2472,7 +2819,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out).",
+        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out), language (ISO 639-1; \"unknown\" for posts without one).",
         "enum": [
           "platform",
           "keyword",
@@ -2480,7 +2827,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "intent",
           "status",
           "hour",
-          "person"
+          "person",
+          "language"
         ],
         "required": true,
         "nullable": false
