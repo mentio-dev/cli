@@ -433,7 +433,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent (buy_intent, question, complaint, praise, comparison).",
+        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional).",
         "required": false,
         "nullable": false
       },
@@ -490,6 +490,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "integer",
         "description": "Only mentions scored at least this; unclassified ones are excluded.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minConfidence",
+        "in": "query",
+        "type": "number",
+        "description": "Only mentions whose classifier confidence is at least this, 0 to 1. Mentions without a confidence are excluded.",
         "required": false,
         "nullable": false
       },
@@ -627,7 +635,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intents",
         "in": "query",
         "type": "array",
-        "description": "Only mentions carrying any of these intents.",
+        "description": "Only mentions carrying any of these intent or topic tags.",
         "required": false,
         "nullable": false
       },
@@ -635,7 +643,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "notIntents",
         "in": "query",
         "type": "array",
-        "description": "Never mentions carrying these intents.",
+        "description": "Never mentions carrying these intent or topic tags.",
         "required": false,
         "nullable": false
       },
@@ -732,7 +740,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.csv",
     "summary": "Export mentions as CSV",
-    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), status, relevant, delivered, url, text (first 1,000 characters). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
     "tag": "Mentions",
     "params": [
       {
@@ -801,7 +809,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent (buy_intent, question, complaint, praise, comparison).",
+        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional).",
         "required": false,
         "nullable": false
       },
@@ -858,6 +866,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "integer",
         "description": "Only mentions scored at least this; unclassified ones are excluded.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minConfidence",
+        "in": "query",
+        "type": "number",
+        "description": "Only mentions whose classifier confidence is at least this, 0 to 1. Mentions without a confidence are excluded.",
         "required": false,
         "nullable": false
       },
@@ -995,7 +1011,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intents",
         "in": "query",
         "type": "array",
-        "description": "Only mentions carrying any of these intents.",
+        "description": "Only mentions carrying any of these intent or topic tags.",
         "required": false,
         "nullable": false
       },
@@ -1003,7 +1019,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "notIntents",
         "in": "query",
         "type": "array",
-        "description": "Never mentions carrying these intents.",
+        "description": "Never mentions carrying these intent or topic tags.",
         "required": false,
         "nullable": false
       },
