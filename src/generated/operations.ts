@@ -84,9 +84,97 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/keywords",
     "summary": "List keywords",
-    "description": "Every keyword of the workspace, newest first, with its match stats and poll health.",
+    "description": "The keywords of the workspace with their match stats and poll health. Without parameters: every keyword, newest first. `q` searches the term and the context; `kind`, `status` and `platform` narrow the list; `sort` orders it; `limit` and `offset` page it. `total` counts the keywords that matched before paging.",
     "tag": "Keywords",
-    "params": [],
+    "params": [
+      {
+        "name": "q",
+        "in": "query",
+        "type": "string",
+        "description": "Text to find in the term or in the keyword's context, case-insensitive.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kind",
+        "in": "query",
+        "type": "array",
+        "description": "Only these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "in": "query",
+        "type": "array",
+        "description": "Only keywords in these states: active, muted, paused. Repeatable, or comma-separated.",
+        "enum": [
+          "active",
+          "muted",
+          "paused"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "platform",
+        "in": "query",
+        "type": "array",
+        "description": "Only keywords tracked on any of these platforms; a keyword tracked everywhere always passes. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "sort",
+        "in": "query",
+        "type": "string",
+        "description": "newest: created most recently first. oldest: the reverse. term: A to Z. mentions: most matches first. relevant: most relevant matches first. recent: most matches in the last 7 days first. lastMention: newest matched post first, keywords with none last.",
+        "enum": [
+          "newest",
+          "oldest",
+          "term",
+          "mentions",
+          "relevant",
+          "recent",
+          "lastMention"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 500. Omit for every keyword after `offset`.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "offset",
+        "in": "query",
+        "type": "integer",
+        "description": "Skip this many keywords.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": null,
     "response": "json"
   },
