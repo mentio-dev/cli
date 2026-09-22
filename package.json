@@ -1,6 +1,6 @@
 {
   "name": "@mentio-dev/cli",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "description": "Command-line client for the Mentio API: one command per endpoint, plus watch and MCP helpers.",
   "license": "MIT",
   "homepage": "https://docs.mentio.dev/cli",

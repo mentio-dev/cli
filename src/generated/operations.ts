@@ -622,6 +622,27 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "viewId",
+        "in": "query",
+        "type": "string",
+        "description": "Apply a saved view's filter (an id from GET /v1/views) on top of the other filters, every condition ANDed: exactly what the view selects. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of keywords of any of these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "tags",
         "in": "query",
         "type": "array",
@@ -994,6 +1015,27 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Apply an alert rule's filter (an id from GET /v1/alerts) on top of the other filters: the same mentions the rule would send, for a feed-shaped export or a preview. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "viewId",
+        "in": "query",
+        "type": "string",
+        "description": "Apply a saved view's filter (an id from GET /v1/views) on top of the other filters, every condition ANDed: exactly what the view selects. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of keywords of any of these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
         "required": false,
         "nullable": false
       },
@@ -2077,6 +2119,133 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "path",
         "type": "string",
         "description": "Segment id (seg_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "listViews",
+    "method": "GET",
+    "path": "/v1/views",
+    "summary": "List views",
+    "description": "The saved views of the workspace, oldest first. A view is a named filter over mentions: pass its id as `viewId` to GET /v1/mentions or the export to read exactly what it selects.",
+    "tag": "Views",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createView",
+    "method": "POST",
+    "path": "/v1/views",
+    "summary": "Save a view",
+    "description": "Save a named filter over mentions. The filter takes the same fields as GET /v1/mentions (lists are any-of, `not` lists none-of, every condition ANDed); an empty filter is every mention. Nothing is materialized: the view selects whatever matches when it is read.",
+    "tag": "Views",
+    "params": [],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Unique per workspace, case-insensitive.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "description": "What the view is for, shown under its name.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "The filter; empty selects every mention.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getView",
+    "method": "GET",
+    "path": "/v1/views/{id}",
+    "summary": "Get a view",
+    "tag": "Views",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "View id (vw_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateView",
+    "method": "PATCH",
+    "path": "/v1/views/{id}",
+    "summary": "Update a view",
+    "description": "Rename, describe or refilter a view. `filter` replaces the whole filter.",
+    "tag": "Views",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "View id (vw_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Replaces the whole filter.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteView",
+    "method": "DELETE",
+    "path": "/v1/views/{id}",
+    "summary": "Delete a view",
+    "description": "Removes the view. No mention is affected.",
+    "tag": "Views",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "View id (vw_...).",
         "required": true,
         "nullable": false
       }

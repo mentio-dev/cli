@@ -67,6 +67,11 @@ describe('commandName', () => {
         'segments:update',
         'system:health',
         'usage:get',
+        'views:create',
+        'views:delete',
+        'views:get',
+        'views:list',
+        'views:update',
       ].sort(),
     );
   });
