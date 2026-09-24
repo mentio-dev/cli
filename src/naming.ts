@@ -43,6 +43,10 @@ const NAMED_VERBS: Record<string, string> = {
   createInvitation: 'invite',
   revokeInvitation: 'revoke-invitation',
   removeMember: 'remove',
+  // The wallet: the checkout is a top-up, and a receipt's link would
+  // otherwise share `billing:invoices` with the list.
+  createTopUp: 'top-up',
+  getInvoiceUrl: 'invoice-url',
 };
 
 /** Resources with one instance per workspace: a GET on the collection path

@@ -2535,6 +2535,104 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "json"
   },
   {
+    "operationId": "createTopUp",
+    "method": "POST",
+    "path": "/v1/billing/top-ups",
+    "summary": "Create a top-up checkout",
+    "description": "Returns a hosted checkout URL with `amountCents` prefilled (editable there, $20 to $5,000). The balance is credited when the payment lands, within a minute, and tracking the wallet had paused resumes at once. Nothing is charged by this call itself. `successUrl` must be on an origin this deployment trusts; omit it for the dashboard's billing page.",
+    "tag": "Billing",
+    "params": [],
+    "body": {
+      "fields": [
+        {
+          "name": "amountCents",
+          "type": "integer",
+          "description": "Amount to add, in USD cents (2000 to 500000). Prefilled at checkout, editable there.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "successUrl",
+          "type": "string",
+          "description": "Where the customer lands after paying: a page on an origin this deployment trusts (the dashboard). Omit it and the dashboard's billing page is used.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getWallet",
+    "method": "GET",
+    "path": "/v1/billing/wallet",
+    "summary": "Get the wallet",
+    "description": "The prepaid balance in full: ledger, pending mention charges and the effective balance the stop rule reads, the daily burn and the days it buys, how many keywords run and how many the wallet paused, what a day costs and what a resume needs, the welcome credit, the newest top-up, the top-up bounds and the auto-recharge settings. `GET /v1/usage` is the short form.",
+    "tag": "Billing",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "listLedger",
+    "method": "GET",
+    "path": "/v1/billing/ledger",
+    "summary": "List ledger entries",
+    "description": "Every movement of the balance, newest first: the welcome credit, top-ups, refunds, the daily keyword-day and mention debits, adjustments. A debit row carries the UTC day it settled and the cumulative units behind it. Cursor paged.",
+    "tag": "Billing",
+    "params": [
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "Opaque cursor from a previous page (`nextCursor`).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100 (default 25).",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "listInvoices",
+    "method": "GET",
+    "path": "/v1/billing/invoices",
+    "summary": "List receipts",
+    "description": "The orders behind the top-ups, newest first, as the merchant of record (Polar) holds them: this workspace's share of the billing customer's newest 100 orders. Empty before the first top-up.",
+    "tag": "Billing",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "getInvoiceUrl",
+    "method": "GET",
+    "path": "/v1/billing/invoices/{id}/url",
+    "summary": "Get a receipt link",
+    "description": "A short-lived link to the receipt PDF of one paid order (an id from the receipts list).",
+    "tag": "Billing",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "The order id from GET /v1/billing/invoices.",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "getAlert",
     "method": "GET",
     "path": "/v1/alerts/{id}",
