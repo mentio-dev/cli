@@ -17,7 +17,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/keywords",
     "summary": "Track a keyword",
-    "description": "Start tracking a word or phrase. Matching, classification and delivery begin on the next poll. A funded workspace tracks up to 500 keywords; each costs $5 per month, deducted daily from the balance. `matching` narrows what the term matches (required and excluded terms, excluded authors, case) before a mention is stored, so a rejected post is never billed; `context` is a sentence the classifier reads for this keyword only.",
+    "description": "Start tracking a word or phrase. Matching, classification and delivery begin on the next poll. A funded workspace tracks up to 500 keywords; each costs $5 per month, deducted daily from the balance. `matching` narrows what the term matches (required and excluded terms, excluded authors, case) before a mention is stored, so a rejected post is never billed; `context` is a sentence the classifier reads for this keyword only. `cap` puts a monthly ceiling on its matched mentions: at the cap it stops matching until the first of the next month (UTC) or until the cap is raised, while its daily keyword charge continues.",
     "tag": "Keywords",
     "params": [],
     "body": {
@@ -74,6 +74,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Omitted fields are untouched; an empty list clears one.",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "cap",
+          "type": "object",
+          "description": "A monthly mention cap; omit or null for none.",
+          "required": false,
+          "nullable": true
         }
       ]
     },
@@ -112,11 +119,12 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "status",
         "in": "query",
         "type": "array",
-        "description": "Only keywords in these states: active, muted, paused. Repeatable, or comma-separated.",
+        "description": "Only keywords in these states: active, muted, paused, capped. Repeatable, or comma-separated.",
         "enum": [
           "active",
           "muted",
-          "paused"
+          "paused",
+          "capped"
         ],
         "required": false,
         "nullable": false
@@ -202,7 +210,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/keywords/{id}",
     "summary": "Update a keyword",
-    "description": "Mute or unmute it, reclassify it (`kind`), change the platforms it is tracked on, its classifier `context`, or its `matching` rules (each rule field optional; an empty list clears one). Rules apply to new mentions from the next poll; stored mentions are untouched.",
+    "description": "Mute or unmute it, reclassify it (`kind`), change the platforms it is tracked on, its classifier `context`, its `matching` rules (each rule field optional; an empty list clears one), or its monthly mention `cap` (null removes it; a cap above this month's count resumes a capped keyword at once). Rules apply to new mentions from the next poll; stored mentions are untouched.",
     "tag": "Keywords",
     "params": [
       {
@@ -269,6 +277,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Omitted fields are untouched; an empty list clears one.",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "cap",
+          "type": "object",
+          "description": "Replaces the monthly mention cap; null removes it. A cap above this month's count resumes a capped keyword at once, one at or under it pauses it.",
+          "required": false,
+          "nullable": true
         }
       ]
     },
