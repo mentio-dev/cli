@@ -3428,6 +3428,22 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Webhooks only; replaces the whole set.",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "events",
+          "type": "array",
+          "description": "Webhooks only; replaces the whole set of account events the endpoint receives. An empty list unsubscribes it from all of them.",
+          "enum": [
+            "keyword.capped",
+            "keyword.paused_for_balance",
+            "keyword.resumed",
+            "wallet.low",
+            "wallet.paused",
+            "wallet.resumed"
+          ],
+          "required": false,
+          "nullable": false,
+          "items": "string"
         }
       ]
     },
@@ -3588,6 +3604,22 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Extra request headers to send, for your own auth.",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "events",
+          "type": "array",
+          "description": "Account events to receive at this endpoint (keyword and wallet state changes), on top of whatever rules send here. Omit for none.",
+          "enum": [
+            "keyword.capped",
+            "keyword.paused_for_balance",
+            "keyword.resumed",
+            "wallet.low",
+            "wallet.paused",
+            "wallet.resumed"
+          ],
+          "required": false,
+          "nullable": false,
+          "items": "string"
         }
       ]
     },
