@@ -71,6 +71,7 @@ describe('commandName', () => {
         'segments:list',
         'segments:update',
         'system:health',
+        'usage:breakdown',
         'usage:get',
         'views:create',
         'views:delete',

@@ -2535,6 +2535,68 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "json"
   },
   {
+    "operationId": "getUsageBreakdown",
+    "method": "GET",
+    "path": "/v1/usage/breakdown",
+    "summary": "Get the usage breakdown",
+    "description": "What the workspace consumed and was charged over a window, grouped by one dimension per call (`by`: day, platform or keyword), in USD cents at list price, with the window's totals on every call. `range` reads a trailing window of UTC days ending today (default 30d); `month` reads one calendar month (YYYY-MM), the shape a bill or a per-customer margin is reconciled against. Keyword-days come from the daily tick and mention charges from the matches that billed, so a deleted keyword keeps its charges in the keyword rows (`keyword.removed`) while its mention counts read 0; the same numbers ride on each keyword as `stats.cost` for the running month. `totals.ledgerDebitCents` is what the wallet has debited so far for the window's days: mentions settle the morning after their day, so a window ending today lags `totals.totalCents` by the unsettled ones, and a closed month differs from it only by cumulative rounding. Rows are paged (`limit`, `offset`, `total`); a workspace may read this at most 30 times a minute through its keys and tokens together.",
+    "tag": "Usage",
+    "params": [
+      {
+        "name": "by",
+        "in": "query",
+        "type": "string",
+        "description": "The dimension to group by: day (one row per UTC day of the window), platform, or keyword (default: the row a margin is computed from).",
+        "enum": [
+          "day",
+          "platform",
+          "keyword"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "Trailing window of UTC days ending today: 7d, 30d, 90d (default 30d). Ignored when `month` is given.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "month",
+        "in": "query",
+        "type": "string",
+        "description": "A calendar month (YYYY-MM, UTC) instead of a trailing window: from its first day to its last, or to today for the running month. A future month is a 400.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Rows per page, 1 to 500 (default 100). Only by=keyword can outgrow a page; a window has at most 90 days and a dozen platforms.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "offset",
+        "in": "query",
+        "type": "integer",
+        "description": "Skip this many rows.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "createTopUp",
     "method": "POST",
     "path": "/v1/billing/top-ups",
