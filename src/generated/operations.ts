@@ -64,7 +64,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "context",
           "type": "string",
-          "description": "A sentence the classifier reads for this keyword only, on top of the company profile (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
+          "description": "A sentence the classifier reads for this keyword only, on top of the company profile or the group's own description (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
           "required": false,
           "nullable": true
         },
@@ -282,7 +282,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "context",
           "type": "string",
-          "description": "A sentence the classifier reads for this keyword only, on top of the company profile (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
+          "description": "A sentence the classifier reads for this keyword only, on top of the company profile or the group's own description (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
           "required": false,
           "nullable": true
         },
@@ -2347,7 +2347,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/groups",
     "summary": "Create a group",
-    "description": "Create a keyword group. `name` is unique per workspace; `externalId` (optional, unique too) is your own id for it, a customer id say, so you can find it again without storing ours. Then pass the group id as `groupId` when creating a keyword.",
+    "description": "Create a keyword group. `name` is unique per workspace; `externalId` (optional, unique too) is your own id for it, a customer id say, so you can find it again without storing ours; `context` (optional) is the group's own company description, which the classifier reads in place of the whole workspace profile for the group's keywords. Then pass the group id as `groupId` when creating a keyword.",
     "tag": "Groups",
     "params": [],
     "body": {
@@ -2363,6 +2363,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "externalId",
           "type": "string",
           "description": "Your own id for the group (a customer id, say). Unique per workspace; find the group by it with GET /v1/groups?externalId=.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "What the classifier reads as \"the company\" for this group's keywords, in place of the WHOLE workspace profile, its relevance guidelines and competitor list included (at most 4000 characters): who the business is, what it sells, for whom, what is not it, and any rule that should apply to this group (\"ignore job posts\"). For a group per customer, the customer's description. Null: the workspace profile, as for every keyword before groups.",
           "required": false,
           "nullable": true
         }
@@ -2394,7 +2401,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/groups/{id}",
     "summary": "Update a group",
-    "description": "Rename a group or change your id for it (`externalId`, null clears). The default group can be renamed like any other.",
+    "description": "Rename a group, change your id for it (`externalId`, null clears) or its company description (`context`, null clears: the workspace profile applies again; new mentions are judged with it at once, old ones are not rescored). The default group can be renamed like any other but takes no description: it is the workspace itself and reads the company profile.",
     "tag": "Groups",
     "params": [
       {
@@ -2420,6 +2427,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "externalId",
           "type": "string",
           "description": "Replaces your id for the group; null clears it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "Replaces the group's company description; null clears it (the workspace profile applies again). New mentions are judged with it at once; old ones are not rescored. Not on the default group (400 default_group_context): that one is the workspace itself and reads the profile.",
           "required": false,
           "nullable": true
         }
