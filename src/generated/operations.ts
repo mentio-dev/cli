@@ -56,7 +56,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "youtube",
             "news",
             "linkedin",
-            "tiktok"
+            "tiktok",
+            "instagram"
           ],
           "required": false,
           "nullable": true,
@@ -161,7 +162,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -276,7 +278,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "youtube",
             "news",
             "linkedin",
-            "tiktok"
+            "tiktok",
+            "instagram"
           ],
           "required": false,
           "nullable": true,
@@ -519,7 +522,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -715,7 +719,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -736,7 +741,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -935,7 +941,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1131,7 +1138,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1152,7 +1160,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1315,7 +1324,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1376,7 +1386,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1445,7 +1456,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1582,7 +1594,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1643,7 +1656,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -1712,7 +1726,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -3253,7 +3268,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -3340,7 +3356,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -3454,7 +3471,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
@@ -3559,7 +3577,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "youtube",
           "news",
           "linkedin",
-          "tiktok"
+          "tiktok",
+          "instagram"
         ],
         "required": false,
         "nullable": false
