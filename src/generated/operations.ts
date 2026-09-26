@@ -81,6 +81,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "A monthly mention cap; omit or null for none.",
           "required": false,
           "nullable": true
+        },
+        {
+          "name": "groupId",
+          "type": "string",
+          "description": "The group to track it in (grp_...); omit for the workspace's default group. A term may be tracked once per group.",
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -99,6 +106,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Text to find in the term or in the keyword's context, case-insensitive.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "groupId",
+        "in": "query",
+        "type": "array",
+        "description": "Only keywords in any of these groups (grp_...). Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -284,6 +299,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Replaces the monthly mention cap; null removes it. A cap above this month's count resumes a capped keyword at once, one at or under it pauses it.",
           "required": false,
           "nullable": true
+        },
+        {
+          "name": "groupId",
+          "type": "string",
+          "description": "Moves the keyword to this group (grp_...). A 409 when that group already tracks the term.",
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -722,6 +744,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "groupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of keywords in any of these groups (grp_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notGroupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of keywords in these groups.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "notKeywordIds",
         "in": "query",
         "type": "array",
@@ -1115,6 +1153,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only matches of any of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "groupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of keywords in any of these groups (grp_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notGroupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of keywords in these groups.",
         "required": false,
         "nullable": false
       },
@@ -2269,6 +2323,131 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "listGroups",
+    "method": "GET",
+    "path": "/v1/groups",
+    "summary": "List groups",
+    "description": "The keyword groups of the workspace, the default group first, then oldest first. A group is how keywords are grouped (a customer, a campaign, a product): a term may be tracked once per group, every keyword belongs to one, and GET /v1/usage/breakdown?by=group says what each group cost. Pass `externalId` to find the group carrying your own id.",
+    "tag": "Groups",
+    "params": [
+      {
+        "name": "externalId",
+        "in": "query",
+        "type": "string",
+        "description": "Only the group carrying exactly this externalId.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createGroup",
+    "method": "POST",
+    "path": "/v1/groups",
+    "summary": "Create a group",
+    "description": "Create a keyword group. `name` is unique per workspace; `externalId` (optional, unique too) is your own id for it, a customer id say, so you can find it again without storing ours. Then pass the group id as `groupId` when creating a keyword.",
+    "tag": "Groups",
+    "params": [],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "The group's name: a customer, a campaign, a product. Unique per workspace.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "externalId",
+          "type": "string",
+          "description": "Your own id for the group (a customer id, say). Unique per workspace; find the group by it with GET /v1/groups?externalId=.",
+          "required": false,
+          "nullable": true
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getGroup",
+    "method": "GET",
+    "path": "/v1/groups/{id}",
+    "summary": "Get a group",
+    "tag": "Groups",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Group id (grp_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateGroup",
+    "method": "PATCH",
+    "path": "/v1/groups/{id}",
+    "summary": "Update a group",
+    "description": "Rename a group or change your id for it (`externalId`, null clears). The default group can be renamed like any other.",
+    "tag": "Groups",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Group id (grp_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "description": "Omitted fields are untouched.",
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "The group's name: a customer, a campaign, a product. Unique per workspace.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "externalId",
+          "type": "string",
+          "description": "Replaces your id for the group; null clears it.",
+          "required": false,
+          "nullable": true
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteGroup",
+    "method": "DELETE",
+    "path": "/v1/groups/{id}",
+    "summary": "Delete a group and its keywords",
+    "description": "Deletes the group and EVERY keyword in it, each the way DELETE /v1/keywords/{id} does (its mentions go with it, alert rules that named it are adjusted; charges already made stay on the usage record). Read the group first: `stats.keywords` says how many go. The default group cannot be deleted: move or delete its keywords instead.",
+    "tag": "Groups",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Group id (grp_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
     "operationId": "getCompany",
     "method": "GET",
     "path": "/v1/company",
@@ -2546,11 +2725,12 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by: day (one row per UTC day of the window), platform, or keyword (default: the row a margin is computed from).",
+        "description": "The dimension to group by: day (one row per UTC day of the window), platform, keyword (default: the row a margin is computed from), or group (what a customer or a campaign cost).",
         "enum": [
           "day",
           "platform",
-          "keyword"
+          "keyword",
+          "group"
         ],
         "required": false,
         "nullable": false
