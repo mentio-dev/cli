@@ -18,6 +18,7 @@ describe('commandName', () => {
         'alerts:unmute',
         'alerts:update',
         'analytics:breakdown',
+        'analytics:reviews',
         'analytics:series',
         'analytics:share-of-voice',
         'analytics:summary',

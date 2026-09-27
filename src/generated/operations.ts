@@ -94,7 +94,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "reviewSources",
           "type": "array",
-          "description": "Apps whose reviews this keyword collects, at most 10: every new review of one of them is a mention of the keyword, whatever its text says. Polled once a day per country. A newly added app brings its last 30 days, the newest 100 reviews per country, free and never sent as instant alerts; after that each review bills like any mention.",
+          "description": "Review pages this keyword collects, at most 10: App Store and Google Play apps, Trustpilot pages, Google Maps places. Every new review of one is a mention of the keyword, whatever its text says. Polled once a day (per country on the app stores). A newly connected page brings its last 30 days, the newest 100 reviews (per country), free and never sent as instant alerts; after that each review bills like any mention.",
           "required": false,
           "nullable": false,
           "items": "object"
@@ -173,7 +173,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -543,7 +545,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -742,7 +746,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -766,7 +772,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -976,7 +984,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1175,7 +1185,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1199,7 +1211,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1373,7 +1387,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1437,7 +1453,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1509,7 +1527,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1649,7 +1669,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1713,7 +1735,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -1785,7 +1809,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -3329,7 +3355,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -3419,7 +3447,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -3536,7 +3566,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -3644,7 +3676,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "tiktok",
           "instagram",
           "appstore",
-          "googleplay"
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
         ],
         "required": false,
         "nullable": false
@@ -3662,6 +3696,110 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "IANA zone the days are cut in (Europe/Madrid). Default UTC. One offset, the zone's at the end of the window, applies to the whole window.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "getReviewsReport",
+    "method": "GET",
+    "path": "/v1/analytics/reviews",
+    "summary": "Reviews: stars over a window, per review page",
+    "description": "The reviews a keyword collects (App Store, Google Play, Trustpilot, Google Maps): count, average stars, distribution, replies and open 1-2 star reviews, for the workspace and per review page with a series of average stars per `bucket`, plus the tags the unhappy reviews carry. A review matched by two keywords counts once. The window is `range` (7d, 30d, 90d, 365d, ending today) or `from` and `to`, cut into days in `timezone` (UTC by default); `keywordIds` and `platforms` narrow it; `compare=true` adds the period of the same length right before it. Time axis is the publish date.",
+    "tag": "Analytics",
+    "params": [
+      {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "Preset window ending today. Ignored when from or to is given. Default 30d.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "First day, YYYY-MM-DD, inclusive, in `timezone`.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "Last day, YYYY-MM-DD, inclusive, in `timezone`. Default today.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only these keyword ids. Repeatable, or comma-separated; omit for every keyword.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "platforms",
+        "in": "query",
+        "type": "array",
+        "description": "Only these platforms. Repeatable, or comma-separated; omit for every platform.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "compare",
+        "in": "query",
+        "type": "boolean",
+        "description": "true adds the period of the same length right before the window as `previous`.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone the days are cut in (Europe/Madrid). Default UTC. One offset, the zone's at the end of the window, applies to the whole window.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "bucket",
+        "in": "query",
+        "type": "string",
+        "description": "Series bucket: day (default up to 90 days) or week.",
+        "enum": [
+          "day",
+          "week"
+        ],
         "required": false,
         "nullable": false
       }
