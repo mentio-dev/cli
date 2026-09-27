@@ -44,7 +44,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "platforms",
           "type": "array",
-          "description": "Platforms to track it on; omit or null for every platform.",
+          "description": "Platforms to search the term on; omit or null for every platform. [] searches it nowhere: a keyword that only collects reviews, which then needs reviewSources.",
           "enum": [
             "bluesky",
             "hackernews",
@@ -90,6 +90,14 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "The group to track it in (grp_...); omit for the workspace's default group. A term may be tracked once per group.",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "reviewSources",
+          "type": "array",
+          "description": "Apps whose reviews this keyword collects, at most 10: every new review of one of them is a mention of the keyword, whatever its text says. Polled once a day per country. A newly added app brings its last 30 days, the newest 100 reviews per country, free and never sent as instant alerts; after that each review bills like any mention.",
+          "required": false,
+          "nullable": false,
+          "items": "object"
         }
       ]
     },
@@ -150,7 +158,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "array",
-        "description": "Only keywords tracked on any of these platforms; a keyword tracked everywhere always passes. Repeatable, or comma-separated.",
+        "description": "Only keywords tracked on any of these platforms: its term searched there (every platform when its platforms are null), or for appstore and googleplay, an app of that store among its reviewSources. Repeatable, or comma-separated.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -163,7 +171,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -266,7 +276,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "platforms",
           "type": "array",
-          "description": "Replaces the platform list; null means every platform.",
+          "description": "Replaces the platform list; null means every platform, [] none (reviews only, when the keyword has reviewSources).",
           "enum": [
             "bluesky",
             "hackernews",
@@ -312,6 +322,14 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Moves the keyword to this group (grp_...). A 409 when that group already tracks the term.",
           "required": false,
           "nullable": false
+        },
+        {
+          "name": "reviewSources",
+          "type": "array",
+          "description": "Replaces the list of apps whose reviews this keyword collects; [] disconnects them all (their reviews stay). An app or country added here gets the free 30-day look-back; one already listed keeps its place.",
+          "required": false,
+          "nullable": false,
+          "items": "object"
         }
       ]
     },
@@ -523,7 +541,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -720,7 +740,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -742,7 +764,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -850,6 +874,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never posts in these languages. A post whose language is unknown still passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "ratings",
+        "in": "query",
+        "type": "array",
+        "description": "Only app store reviews with any of these star ratings (1 to 5): ratings=1,2 is the unhappy ones. Every other post fails it.",
         "required": false,
         "nullable": false
       },
@@ -914,7 +946,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.csv",
     "summary": "Export mentions as CSV",
-    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
     "tag": "Mentions",
     "params": [
       {
@@ -942,7 +974,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1139,7 +1173,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1161,7 +1197,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1273,6 +1311,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "ratings",
+        "in": "query",
+        "type": "array",
+        "description": "Only app store reviews with any of these star ratings (1 to 5): ratings=1,2 is the unhappy ones. Every other post fails it.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
@@ -1325,7 +1371,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1387,7 +1435,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1457,7 +1507,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1595,7 +1647,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1657,7 +1711,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -1727,7 +1783,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -3269,7 +3327,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -3357,7 +3417,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -3472,7 +3534,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
@@ -3578,7 +3642,9 @@ export const OPERATIONS: readonly CliOperation[] = [
           "news",
           "linkedin",
           "tiktok",
-          "instagram"
+          "instagram",
+          "appstore",
+          "googleplay"
         ],
         "required": false,
         "nullable": false
