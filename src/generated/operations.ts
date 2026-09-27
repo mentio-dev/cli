@@ -149,6 +149,7 @@ export const OPERATIONS: readonly CliOperation[] = [
           "active",
           "muted",
           "paused",
+          "noisy",
           "capped"
         ],
         "required": false,
