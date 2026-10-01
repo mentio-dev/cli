@@ -359,6 +359,47 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "getKeywordHealth",
+    "method": "GET",
+    "path": "/v1/keywords/{id}/health",
+    "summary": "Get a keyword's health",
+    "description": "Whether the keyword earns what it costs over a trailing window (`range`, default 30d): a status (healthy, noisy, quiet, capped, paused, new) with the reasons in plain words, its numbers by platform and week, what it cost, the words and authors its noise is made of, and suggestions. Each suggestion carries a `patch` to send to PATCH /v1/keywords/{id} as is, and the effect it would have had, measured by running the matcher's own rules over the window's posts. `ai=true` adds a context rewritten by a language model (cached a day, at most 20 model calls an hour per workspace). Read only and never billed; the report is cached for 5 minutes, and a change to the keyword starts a fresh one. At most 30 reads a minute per workspace.",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Keyword id (kw_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "Trailing window of UTC days ending today, by match time: 7d, 30d, 90d (default 30d).",
+        "enum": [
+          "7d",
+          "30d",
+          "90d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "ai",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: also ask a language model for a rewritten context (cached a day per keyword and window, at most 20 model calls an hour per workspace). Default false: every suggestion comes from the rules alone.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "getFilters",
     "method": "GET",
     "path": "/v1/filters",
@@ -516,7 +557,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions",
     "summary": "List mentions",
-    "description": "Mentions matched to your keywords, filtered and paginated. Default order is newest match first; sort=priority ranks the last 30 days of matches by attention score. Page with nextCursor, passing the same filters and sort. A mention is one post matched to one keyword. alertId applies an alert rule's filter on top of the others: the same mentions that rule would send.",
+    "description": "Mentions matched to your keywords, filtered and paginated. Default order is newest match first; sort=priority ranks the last 30 days of matches by attention score. Page with nextCursor, passing the same filters and sort. A mention is one post matched to one keyword. alertId applies an alert rule's filter on top of the others: the same mentions that rule would send. anyOf adds OR: URL-encoded JSON groups of conditions, at least one of which must hold on top of every other filter.",
     "tag": "Mentions",
     "params": [
       {
@@ -591,7 +632,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional).",
+        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
         "required": false,
         "nullable": false
       },
@@ -891,6 +932,70 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only app store reviews with any of these star ratings (1 to 5): ratings=1,2 is the unhappy ones. Every other post fails it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notRatings",
+        "in": "query",
+        "type": "array",
+        "description": "Never reviews with these star ratings (1 to 5): notRatings=5 hides the five star reviews. Posts that are not reviews still pass.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minLikes",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many likes (upvotes, reactions), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minReposts",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many reposts (shares, retweets), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minReplies",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many replies (comments), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minQuotes",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many quotes, as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minViews",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many views (plays), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minBookmarks",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many bookmarks (saves), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "anyOf",
+        "in": "query",
+        "type": "string",
+        "description": "OR across groups of conditions, as URL-encoded JSON: [{\"platforms\":[\"reddit\"],\"sentiments\":[\"negative\"]},{\"intents\":[\"buy_intent\"]}] is \"negative on Reddit, or buying intent anywhere\". Each group holds the conditions of a view filter (lists any-of, not lists none-of, all ANDed); a mention passes when at least one group holds, and every other filter here still applies. 1 to 10 groups, none empty, no nesting.",
         "required": false,
         "nullable": false
       },
@@ -955,7 +1060,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.csv",
     "summary": "Export mentions as CSV",
-    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only), title and image_url (where the platform has them). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
     "tag": "Mentions",
     "params": [
       {
@@ -1030,7 +1135,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional).",
+        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
         "required": false,
         "nullable": false
       },
@@ -1334,6 +1439,70 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notRatings",
+        "in": "query",
+        "type": "array",
+        "description": "Never reviews with these star ratings (1 to 5): notRatings=5 hides the five star reviews. Posts that are not reviews still pass.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minLikes",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many likes (upvotes, reactions), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minReposts",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many reposts (shares, retweets), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minReplies",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many replies (comments), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minQuotes",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many quotes, as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minViews",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many views (plays), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minBookmarks",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many bookmarks (saves), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "anyOf",
+        "in": "query",
+        "type": "string",
+        "description": "OR across groups of conditions, as URL-encoded JSON: [{\"platforms\":[\"reddit\"],\"sentiments\":[\"negative\"]},{\"intents\":[\"buy_intent\"]}] is \"negative on Reddit, or buying intent anywhere\". Each group holds the conditions of a view filter (lists any-of, not lists none-of, all ANDed); a mention passes when at least one group holds, and every other filter here still applies. 1 to 10 groups, none empty, no nesting.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "q",
         "in": "query",
         "type": "string",
@@ -1360,6 +1529,481 @@ export const OPERATIONS: readonly CliOperation[] = [
     ],
     "body": null,
     "response": "csv"
+  },
+  {
+    "operationId": "exportMentionsJson",
+    "method": "GET",
+    "path": "/v1/mentions/export.json",
+    "summary": "Export mentions as JSON",
+    "description": "The same mentions GET /v1/mentions would list for these filters, in one response, newest matched first (the order they entered your feed): every row is the full Mention object the list returns, text included. Capped at 10,000 mentions; `truncated` (and the X-Mentions-Truncated header) says when the cap cut the list. Shares the CSV export's limit: at most 6 exports per minute per workspace, either format; a 429 carries Retry-After.",
+    "tag": "Mentions",
+    "params": [
+      {
+        "name": "keywordId",
+        "in": "query",
+        "type": "string",
+        "description": "Only matches of this keyword.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "platform",
+        "in": "query",
+        "type": "string",
+        "description": "Only posts from this platform.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "status",
+        "in": "query",
+        "type": "string",
+        "description": "Only mentions in this status. Omit for every status.",
+        "enum": [
+          "open",
+          "ignored",
+          "done"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "relevant",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only mentions the classifier scored relevant; false: only the rest (unclassified included).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "sentiment",
+        "in": "query",
+        "type": "string",
+        "description": "Only this sentiment.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "intent",
+        "in": "query",
+        "type": "string",
+        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "automated",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only mentions that read as machine-made (a bot account, a scheduled or templated post, AI-written text); false: only the rest, mentions judged before this existed included. Omitted: everything.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "personId",
+        "in": "query",
+        "type": "string",
+        "description": "Only this person (an id from /v1/people), merged accounts included. Implies includeMuted.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "includeMuted",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: include mentions by people you muted, hidden by default.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "assigneeId",
+        "in": "query",
+        "type": "string",
+        "description": "Only mentions assigned to this workspace member (user id).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "snoozed",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only mentions currently snoozed. Otherwise snoozed mentions stay out until they wake.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "excludeAuthors",
+        "in": "query",
+        "type": "array",
+        "description": "Hide these authors: display names, handles or profile URLs. Repeatable, or one comma-separated value.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minRelevance",
+        "in": "query",
+        "type": "integer",
+        "description": "Only mentions scored at least this; unclassified ones are excluded.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minConfidence",
+        "in": "query",
+        "type": "number",
+        "description": "Only mentions whose classifier confidence is at least this, 0 to 1. Mentions without a confidence are excluded.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minFollowers",
+        "in": "query",
+        "type": "integer",
+        "description": "Only authors with at least this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "maxFollowers",
+        "in": "query",
+        "type": "integer",
+        "description": "Only authors with at most this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "isReply",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: only replies and comments (posts answering another post); false: only top-level posts. Omitted: both.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "alertId",
+        "in": "query",
+        "type": "string",
+        "description": "Apply an alert rule's filter (an id from GET /v1/alerts) on top of the other filters: the same mentions the rule would send, for a feed-shaped export or a preview. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "viewId",
+        "in": "query",
+        "type": "string",
+        "description": "Apply a saved view's filter (an id from GET /v1/views) on top of the other filters, every condition ANDed: exactly what the view selects. Unknown ids are a 404.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of keywords of any of these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "tags",
+        "in": "query",
+        "type": "array",
+        "description": "Only authors your workspace tagged with any of these (exact, case-sensitive). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "linkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts linking to any of these hosts, the host itself or a subdomain of it (octolens.com also matches blog.octolens.com). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "platforms",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts from any of these platforms.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts from these platforms.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of any of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "groupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only matches of keywords in any of these groups (grp_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notGroupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of keywords in these groups.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of these keywords.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "sentiments",
+        "in": "query",
+        "type": "array",
+        "description": "Only these sentiments.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notSentiments",
+        "in": "query",
+        "type": "array",
+        "description": "Never these sentiments. A mention the classifier has not scored yet still passes.",
+        "enum": [
+          "positive",
+          "neutral",
+          "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "intents",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions carrying any of these intent or topic tags.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notIntents",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions carrying these intent or topic tags.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLinkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts linking to these hosts, the host itself or a subdomain of it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notTags",
+        "in": "query",
+        "type": "array",
+        "description": "Never authors your workspace tagged with any of these.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "languages",
+        "in": "query",
+        "type": "array",
+        "description": "Only posts in any of these languages (ISO 639-1: en, es, de). A post whose language is unknown never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLanguages",
+        "in": "query",
+        "type": "array",
+        "description": "Never posts in these languages. A post whose language is unknown still passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "ratings",
+        "in": "query",
+        "type": "array",
+        "description": "Only app store reviews with any of these star ratings (1 to 5): ratings=1,2 is the unhappy ones. Every other post fails it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notRatings",
+        "in": "query",
+        "type": "array",
+        "description": "Never reviews with these star ratings (1 to 5): notRatings=5 hides the five star reviews. Posts that are not reviews still pass.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minLikes",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many likes (upvotes, reactions), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minReposts",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many reposts (shares, retweets), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minReplies",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many replies (comments), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minQuotes",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many quotes, as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minViews",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many views (plays), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minBookmarks",
+        "in": "query",
+        "type": "integer",
+        "description": "Only posts with at least this many bookmarks (saves), as the platform reported them when the post was found. A post without that count never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "anyOf",
+        "in": "query",
+        "type": "string",
+        "description": "OR across groups of conditions, as URL-encoded JSON: [{\"platforms\":[\"reddit\"],\"sentiments\":[\"negative\"]},{\"intents\":[\"buy_intent\"]}] is \"negative on Reddit, or buying intent anywhere\". Each group holds the conditions of a view filter (lists any-of, not lists none-of, all ANDed); a mention passes when at least one group holds, and every other filter here still applies. 1 to 10 groups, none empty, no nesting.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "q",
+        "in": "query",
+        "type": "string",
+        "description": "Substring search in the post text or the author's name.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "since",
+        "in": "query",
+        "type": "string",
+        "description": "Only posts published at or after this instant (ISO 8601, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "until",
+        "in": "query",
+        "type": "string",
+        "description": "Only posts published at or before this instant (ISO 8601, or epoch ms).",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
   },
   {
     "operationId": "exportPeopleCsv",
@@ -1400,6 +2044,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Matches the display name or the profile handle or URL, case-insensitively.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "handle",
+        "in": "query",
+        "type": "string",
+        "description": "Find a person by one of their accounts: a handle (@jane, u/jane, jane) or a profile or post link (https://x.com/jane). Exact, case-insensitive, merged accounts included; combine with platform to pick one platform. A link names its own platform.",
         "required": false,
         "nullable": false
       },
@@ -1682,6 +2334,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Matches the display name or the profile handle or URL, case-insensitively.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "handle",
+        "in": "query",
+        "type": "string",
+        "description": "Find a person by one of their accounts: a handle (@jane, u/jane, jane) or a profile or post link (https://x.com/jane). Exact, case-insensitive, merged accounts included; combine with platform to pick one platform. A link names its own platform.",
         "required": false,
         "nullable": false
       },
@@ -2326,7 +2986,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/views",
     "summary": "Save a view",
-    "description": "Save a named filter over mentions. The filter takes the same fields as GET /v1/mentions (lists are any-of, `not` lists none-of, every condition ANDed); an empty filter is every mention. Nothing is materialized: the view selects whatever matches when it is read.",
+    "description": "Save a named filter over mentions. The filter takes the same fields as GET /v1/mentions (lists are any-of, `not` lists none-of, every condition ANDed), plus `anyOf`, groups of those conditions of which at least one must hold; an empty filter is every mention. Nothing is materialized: the view selects whatever matches when it is read.",
     "tag": "Views",
     "params": [],
     "body": {
@@ -3129,7 +3789,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/alerts",
     "summary": "Create an alert",
-    "description": "A rule (what to watch, the filter) times channels. mode instant sends each matching mention as it happens; daily sends one digest at schedule.hour in schedule.timezone; weekly sends one a week on schedule.weekday (0 Sunday to 6 Saturday).",
+    "description": "A rule (what to watch, the filter) times channels. mode instant sends each matching mention as it happens; daily sends one digest at schedule.hour in schedule.timezone; weekly sends one a week on schedule.weekday (0 Sunday to 6 Saturday). filter.anyOf adds OR: groups of conditions in the vocabulary of the mentions list, at least one of which must hold on top of the rest of the filter.",
     "tag": "Alerts",
     "params": [],
     "body": {

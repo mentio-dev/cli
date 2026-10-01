@@ -17,6 +17,7 @@
  *   DELETE /v1/people/{id}/activities/{activityId} -> people:delete-activity
  *   GET    /v1/analytics/summary        -> analytics:summary
  *   GET    /v1/mentions/export.csv      -> mentions:export
+ *   GET    /v1/mentions/export.json     -> mentions:export-json (see NAMED_VERBS)
  *   GET    /v1/company                  -> company:get      (a singleton, like /v1/filters)
  *   GET    /v1/health                   -> system:health
  *   GET    /v1/whoami                   -> auth:whoami
@@ -47,6 +48,8 @@ const NAMED_VERBS: Record<string, string> = {
   // otherwise share `billing:invoices` with the list.
   createTopUp: 'top-up',
   getInvoiceUrl: 'invoice-url',
+  // The JSON twin of the CSV export, which already owns `export`.
+  exportMentionsJson: 'export-json',
 };
 
 /** Resources with one instance per workspace: a GET on the collection path

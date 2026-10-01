@@ -51,6 +51,7 @@ describe('commandName', () => {
         'keywords:create',
         'keywords:delete',
         'keywords:get',
+        'keywords:health',
         'keywords:list',
         'keywords:update',
         'members:invitations',
@@ -59,6 +60,7 @@ describe('commandName', () => {
         'members:remove',
         'members:revoke-invitation',
         'mentions:export',
+        'mentions:export-json',
         'mentions:get',
         'mentions:search',
         'mentions:update',
@@ -94,6 +96,7 @@ describe('commandName', () => {
     expect(commandName({ operationId: 'revokeApiKey', method: 'delete', path: '/v1/api-keys/{id}' })).toBe('api-keys:revoke');
     expect(commandName({ operationId: 'deleteThing', method: 'delete', path: '/v1/things/{id}' })).toBe('things:delete');
     expect(commandName({ operationId: 'exportMentionsCsv', method: 'get', path: '/v1/mentions/export.csv' })).toBe('mentions:export');
+    expect(commandName({ operationId: 'exportMentionsJson', method: 'get', path: '/v1/mentions/export.json' })).toBe('mentions:export-json');
     expect(commandName({ operationId: 'getHealth', method: 'get', path: '/v1/health' })).toBe('system:health');
     // A sub-collection: the path segment alone would name all three the same.
     expect(commandName({ operationId: 'listPersonActivities', method: 'get', path: '/v1/people/{id}/activities' })).toBe(
