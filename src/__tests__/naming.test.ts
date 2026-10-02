@@ -31,6 +31,8 @@ describe('commandName', () => {
         'billing:wallet',
         'api-keys:list',
         'api-keys:revoke',
+        'attention:dismiss',
+        'attention:list',
         'channels:create',
         'channels:delete',
         'channels:deliveries',

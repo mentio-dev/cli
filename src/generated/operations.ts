@@ -3098,6 +3098,76 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "listAttention",
+    "method": "GET",
+    "path": "/v1/attention",
+    "summary": "List attention items",
+    "description": "What needs a person, newest first: a keyword whose mentions spiked in the last hour (mention.spike), whose negative share of the last 24 hours jumped (sentiment.negative_spike), that turned noisy (keyword.noisy), or a channel whose last sends all failed (channel.failing). Detected once an hour; an item opens when its condition starts and resolves on its own when the condition is gone. Open items by default; `status=all` reads the history. Each opening is also an account event of the same name, which webhook, Slack, email and Telegram channels can subscribe to.",
+    "tag": "Attention",
+    "params": [
+      {
+        "name": "status",
+        "in": "query",
+        "type": "string",
+        "description": "open (default), resolved, dismissed, or all.",
+        "enum": [
+          "open",
+          "resolved",
+          "dismissed",
+          "all"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kind",
+        "in": "query",
+        "type": "string",
+        "description": "Only these kinds, comma separated: mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Items per page, newest first; 50 by default, at most 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "nextCursor from the previous page.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "dismissAttention",
+    "method": "POST",
+    "path": "/v1/attention/{id}/dismiss",
+    "summary": "Dismiss an attention item",
+    "description": "Put an item away. It leaves the open list and does not come back while its condition lasts; once the condition clears, a new episode may open a new item. Idempotent.",
+    "tag": "Attention",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Attention item id (att_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "listGroups",
     "method": "GET",
     "path": "/v1/groups",
@@ -3718,6 +3788,7 @@ export const OPERATIONS: readonly CliOperation[] = [
           "type": "string",
           "enum": [
             "instant",
+            "hourly",
             "daily",
             "weekly"
           ],
@@ -3734,6 +3805,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "schedule",
           "type": "object",
+          "description": "Daily and weekly alerts. Ignored on an hourly one, except a weekday, which is refused.",
           "required": false,
           "nullable": true
         },
@@ -3789,7 +3861,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/alerts",
     "summary": "Create an alert",
-    "description": "A rule (what to watch, the filter) times channels. mode instant sends each matching mention as it happens; daily sends one digest at schedule.hour in schedule.timezone; weekly sends one a week on schedule.weekday (0 Sunday to 6 Saturday). filter.anyOf adds OR: groups of conditions in the vocabulary of the mentions list, at least one of which must hold on top of the rest of the filter.",
+    "description": "A rule (what to watch, the filter) times channels. mode instant sends each matching mention as it happens; hourly sends one digest every UTC hour (five minutes past) for the previous full hour, nothing when it had no mention over the rule's floor, to Slack, Telegram and webhook channels only (no schedule); daily sends one digest at schedule.hour in schedule.timezone; weekly sends one a week on schedule.weekday (0 Sunday to 6 Saturday). filter.anyOf adds OR: groups of conditions in the vocabulary of the mentions list, at least one of which must hold on top of the rest of the filter.",
     "tag": "Alerts",
     "params": [],
     "body": {
@@ -3811,6 +3883,7 @@ export const OPERATIONS: readonly CliOperation[] = [
           "type": "string",
           "enum": [
             "instant",
+            "hourly",
             "daily",
             "weekly"
           ],
@@ -3826,7 +3899,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "schedule",
           "type": "object",
-          "description": "Required for daily and weekly alerts (weekly ones also need schedule.weekday).",
+          "description": "Required for daily and weekly alerts (weekly ones also need schedule.weekday). Hourly alerts take none: they send every UTC hour, so a time of day and a zone are ignored and a weekday is refused.",
           "required": false,
           "nullable": false
         },
@@ -4529,14 +4602,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "events",
           "type": "array",
-          "description": "Webhooks only; replaces the whole set of account events the endpoint receives. An empty list unsubscribes it from all of them.",
+          "description": "Replaces the whole set of account events the channel receives. A webhook takes any of them; a Slack, email or Telegram channel the attention events only (mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing). An empty list unsubscribes it from all of them.",
           "enum": [
             "keyword.capped",
             "keyword.paused_for_balance",
             "keyword.resumed",
             "wallet.low",
             "wallet.paused",
-            "wallet.resumed"
+            "wallet.resumed",
+            "mention.spike",
+            "sentiment.negative_spike",
+            "keyword.noisy",
+            "channel.failing"
           ],
           "required": false,
           "nullable": false,
@@ -4674,6 +4751,26 @@ export const OPERATIONS: readonly CliOperation[] = [
           "nullable": false
         },
         {
+          "name": "events",
+          "type": "array",
+          "description": "Attention events to receive here, on top of whatever rules send. Omit for none.",
+          "enum": [
+            "mention.spike",
+            "sentiment.negative_spike",
+            "keyword.noisy",
+            "channel.failing",
+            "keyword.capped",
+            "keyword.paused_for_balance",
+            "keyword.resumed",
+            "wallet.low",
+            "wallet.paused",
+            "wallet.resumed"
+          ],
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
           "name": "emails",
           "type": "array",
           "description": "Each address gets a confirmation link; workspace members are confirmed on sight.",
@@ -4701,22 +4798,6 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Extra request headers to send, for your own auth.",
           "required": false,
           "nullable": false
-        },
-        {
-          "name": "events",
-          "type": "array",
-          "description": "Account events to receive at this endpoint (keyword and wallet state changes), on top of whatever rules send here. Omit for none.",
-          "enum": [
-            "keyword.capped",
-            "keyword.paused_for_balance",
-            "keyword.resumed",
-            "wallet.low",
-            "wallet.paused",
-            "wallet.resumed"
-          ],
-          "required": false,
-          "nullable": false,
-          "items": "string"
         }
       ]
     },
