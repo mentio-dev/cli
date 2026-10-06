@@ -25,7 +25,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "term",
           "type": "string",
-          "description": "The word or phrase to track, matched case-insensitively as a phrase.",
+          "description": "The word or phrase to track, case-insensitive. A multi-word term matches as the phrase or as its words close together (see matching.exactPhrase); wrap it in double quotes for the exact phrase only.",
           "required": true,
           "nullable": false
         },
