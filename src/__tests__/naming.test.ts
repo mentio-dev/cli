@@ -61,6 +61,7 @@ describe('commandName', () => {
         'members:list',
         'members:remove',
         'members:revoke-invitation',
+        'mentions:comments',
         'mentions:export',
         'mentions:export-json',
         'mentions:get',

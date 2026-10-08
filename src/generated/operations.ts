@@ -44,7 +44,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "platforms",
           "type": "array",
-          "description": "Platforms to search the term on; omit or null for every platform. [] searches it nowhere: a keyword that only collects reviews, which then needs reviewSources.",
+          "description": "Platforms to search the term on; omit or null for every platform. [] searches it nowhere: a keyword that only collects reviews or reads feeds, which then needs reviewSources or feeds.",
           "enum": [
             "bluesky",
             "hackernews",
@@ -85,6 +85,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "nullable": true
         },
         {
+          "name": "comments",
+          "type": "object",
+          "description": "Comments under this keyword's mentions; omitted fields are untouched (on create: off, 20 per post).",
+          "required": false,
+          "nullable": false
+        },
+        {
           "name": "groupId",
           "type": "string",
           "description": "The group to track it in (grp_...); omit for the workspace's default group. A term may be tracked once per group.",
@@ -95,6 +102,14 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "reviewSources",
           "type": "array",
           "description": "Review pages this keyword collects, at most 10: App Store and Google Play apps, Trustpilot pages, Google Maps places. Every new review of one is a mention of the keyword, whatever its text says. Polled once a day (per country on the app stores). A newly connected page brings its last 30 days, the newest 100 reviews (per country), free and never sent as instant alerts; after that each review bills like any mention.",
+          "required": false,
+          "nullable": false,
+          "items": "object"
+        },
+        {
+          "name": "feeds",
+          "type": "array",
+          "description": "RSS or Atom feeds this keyword reads, at most 20, each { url }: a feed's URL, or a page's (a forum, a community, a blog), in which case the feed the page advertises is used, else a usual address such as /feed or /rss. A URL with no feed behind it is a 400. Each feed is read every hour; an item is a mention of this keyword when it holds the term (with the keyword's matching rules), and only of keywords that named the feed. A newly connected feed brings its newest 10 items of the last 30 days that hold the term, billed like any mention and never sent as instant alerts.",
           "required": false,
           "nullable": false,
           "items": "object"
@@ -176,7 +191,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -320,6 +336,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "nullable": true
         },
         {
+          "name": "comments",
+          "type": "object",
+          "description": "Comments under this keyword's mentions; omitted fields are untouched (on create: off, 20 per post).",
+          "required": false,
+          "nullable": false
+        },
+        {
           "name": "groupId",
           "type": "string",
           "description": "Moves the keyword to this group (grp_...). A 409 when that group already tracks the term.",
@@ -330,6 +353,14 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "reviewSources",
           "type": "array",
           "description": "Replaces the list of apps whose reviews this keyword collects; [] disconnects them all (their reviews stay). An app or country added here gets the free 30-day look-back; one already listed keeps its place.",
+          "required": false,
+          "nullable": false,
+          "items": "object"
+        },
+        {
+          "name": "feeds",
+          "type": "array",
+          "description": "Replaces the feeds this keyword reads; [] disconnects them all (their mentions stay). A feed added here is checked now and brings its newest 10 matching items of the last 30 days; one already listed keeps its place.",
           "required": false,
           "nullable": false,
           "items": "object"
@@ -589,7 +620,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -661,6 +693,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "includeDuplicates",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: list cross-posts (a mention whose duplicateOf is set) as mentions of their own. By default each is listed only in its original's duplicates.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "assigneeId",
         "in": "query",
         "type": "string",
@@ -713,6 +753,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "integer",
         "description": "Only authors with at most this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kind",
+        "in": "query",
+        "type": "string",
+        "description": "Only posts (post) or only comments (comment). Omitted: both.",
+        "enum": [
+          "post",
+          "comment"
+        ],
         "required": false,
         "nullable": false
       },
@@ -790,7 +842,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -816,7 +869,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -900,6 +954,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never posts linking to these hosts, the host itself or a subdomain of it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "subreddits",
+        "in": "query",
+        "type": "array",
+        "description": "Only Reddit posts from any of these subreddits: subreddits=SaaS,startups (names without the r/, any case). Every other post fails it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notSubreddits",
+        "in": "query",
+        "type": "array",
+        "description": "Never Reddit posts from these subreddits; posts from other platforms still pass.",
         "required": false,
         "nullable": false
       },
@@ -1060,7 +1130,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.csv",
     "summary": "Export mentions as CSV",
-    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only), title and image_url (where the platform has them). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only), title and image_url (where the platform has them), kind (post or comment), parent_url (the post a comment answers) and comments (comments of it delivered to you). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
     "tag": "Mentions",
     "params": [
       {
@@ -1092,7 +1162,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -1164,6 +1235,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "includeDuplicates",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: list cross-posts (a mention whose duplicateOf is set) as mentions of their own. By default each is listed only in its original's duplicates.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "assigneeId",
         "in": "query",
         "type": "string",
@@ -1216,6 +1295,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "integer",
         "description": "Only authors with at most this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kind",
+        "in": "query",
+        "type": "string",
+        "description": "Only posts (post) or only comments (comment). Omitted: both.",
+        "enum": [
+          "post",
+          "comment"
+        ],
         "required": false,
         "nullable": false
       },
@@ -1293,7 +1384,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -1319,7 +1411,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -1403,6 +1496,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never posts linking to these hosts, the host itself or a subdomain of it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "subreddits",
+        "in": "query",
+        "type": "array",
+        "description": "Only Reddit posts from any of these subreddits: subreddits=SaaS,startups (names without the r/, any case). Every other post fails it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notSubreddits",
+        "in": "query",
+        "type": "array",
+        "description": "Never Reddit posts from these subreddits; posts from other platforms still pass.",
         "required": false,
         "nullable": false
       },
@@ -1531,6 +1640,42 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "csv"
   },
   {
+    "operationId": "listMentionComments",
+    "method": "GET",
+    "path": "/v1/mentions/{id}/comments",
+    "summary": "List the comments of a mention",
+    "description": "The comments under a mention's post, newest first: every comment in the thread, whether or not it names your keyword. Read once, about a day after the post, for mentions scored relevant whose keyword has comments enabled (keywords.comments), on Hacker News, Bluesky, GitHub, Stack Overflow, DEV, YouTube and Reddit; empty before that and for other keywords. Each comment delivered costs $0.008 on the comments line of the bill, once per workspace. A comment that itself names one of your keywords is also a mention: `mentionId` links it. Two mentions of one post (two keywords) list the same thread.",
+    "tag": "Mentions",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Mention id (mm_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "nextCursor from the previous page.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "exportMentionsJson",
     "method": "GET",
     "path": "/v1/mentions/export.json",
@@ -1567,7 +1712,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -1639,6 +1785,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "includeDuplicates",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: list cross-posts (a mention whose duplicateOf is set) as mentions of their own. By default each is listed only in its original's duplicates.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "assigneeId",
         "in": "query",
         "type": "string",
@@ -1691,6 +1845,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "integer",
         "description": "Only authors with at most this many followers. Unknown reach never passes.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kind",
+        "in": "query",
+        "type": "string",
+        "description": "Only posts (post) or only comments (comment). Omitted: both.",
+        "enum": [
+          "post",
+          "comment"
+        ],
         "required": false,
         "nullable": false
       },
@@ -1768,7 +1934,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -1794,7 +1961,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -1878,6 +2046,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never posts linking to these hosts, the host itself or a subdomain of it.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "subreddits",
+        "in": "query",
+        "type": "array",
+        "description": "Only Reddit posts from any of these subreddits: subreddits=SaaS,startups (names without the r/, any case). Every other post fails it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notSubreddits",
+        "in": "query",
+        "type": "array",
+        "description": "Never Reddit posts from these subreddits; posts from other platforms still pass.",
         "required": false,
         "nullable": false
       },
@@ -2034,7 +2218,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -2108,7 +2293,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -2182,7 +2368,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -2324,7 +2511,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -2398,7 +2586,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -2472,7 +2661,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -4091,7 +4281,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -4183,7 +4374,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -4302,7 +4494,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -4327,7 +4520,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out), language (ISO 639-1; \"unknown\" for posts without one).",
+        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out), language (ISO 639-1; \"unknown\" for posts without one), subreddit (Reddit posts only, most active first; `share` stays a percent of the whole window, every platform included).",
         "enum": [
           "platform",
           "keyword",
@@ -4336,7 +4529,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "status",
           "hour",
           "person",
-          "language"
+          "language",
+          "subreddit"
         ],
         "required": true,
         "nullable": false
@@ -4412,7 +4606,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
@@ -4504,7 +4699,8 @@ export const OPERATIONS: readonly CliOperation[] = [
           "appstore",
           "googleplay",
           "trustpilot",
-          "googlemaps"
+          "googlemaps",
+          "rss"
         ],
         "required": false,
         "nullable": false
