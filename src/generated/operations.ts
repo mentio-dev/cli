@@ -760,10 +760,11 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "kind",
         "in": "query",
         "type": "string",
-        "description": "Only posts (post) or only comments (comment). Omitted: both.",
+        "description": "Only posts (post), only comments (comment) or only GitHub repository events (repository). Omitted: all.",
         "enum": [
           "post",
-          "comment"
+          "comment",
+          "repository"
         ],
         "required": false,
         "nullable": false
@@ -1302,10 +1303,11 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "kind",
         "in": "query",
         "type": "string",
-        "description": "Only posts (post) or only comments (comment). Omitted: both.",
+        "description": "Only posts (post), only comments (comment) or only GitHub repository events (repository). Omitted: all.",
         "enum": [
           "post",
-          "comment"
+          "comment",
+          "repository"
         ],
         "required": false,
         "nullable": false
@@ -1852,10 +1854,11 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "kind",
         "in": "query",
         "type": "string",
-        "description": "Only posts (post) or only comments (comment). Omitted: both.",
+        "description": "Only posts (post), only comments (comment) or only GitHub repository events (repository). Omitted: all.",
         "enum": [
           "post",
-          "comment"
+          "comment",
+          "repository"
         ],
         "required": false,
         "nullable": false
