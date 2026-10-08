@@ -3809,6 +3809,65 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "First UTC day of a custom window, YYYY-MM-DD, inclusive; with `to` (default today). At most 366 days. Wins over `range` and `month`.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "Last UTC day of a custom window, YYYY-MM-DD, inclusive; never after today. Needs `from`.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "keywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only these keywords (kw_...), deleted ones included. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "groupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only these groups (grp_...): a keyword-day by the group it was metered under, a mention or a comment by its keyword's group as it is now. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "platforms",
+        "in": "query",
+        "type": "array",
+        "description": "Only these platforms. A keyword-day belongs to no platform, so with this filter the keyword line reads 0 and only mentions and comments count. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "limit",
         "in": "query",
         "type": "integer",
