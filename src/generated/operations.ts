@@ -258,7 +258,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/keywords/{id}",
     "summary": "Update a keyword",
-    "description": "Mute or unmute it, reclassify it (`kind`), change the platforms it is tracked on, its classifier `context`, its `matching` rules (each rule field optional; an empty list clears one), or its monthly mention `cap` (null removes it; a cap above this month's count resumes a capped keyword at once). Rules apply to new mentions from the next poll; stored mentions are untouched.",
+    "description": "Rename it (`term`: the new term is tracked from now on, with no look-back; the mentions the old term found stay), mute or unmute it, reclassify it (`kind`), change the platforms it is tracked on, its classifier `context`, its `matching` rules (each rule field optional; an empty list clears one), or its monthly mention `cap` (null removes it; a cap above this month's count resumes a capped keyword at once). Rules apply to new mentions from the next poll; stored mentions are untouched.",
     "tag": "Keywords",
     "params": [
       {
@@ -273,6 +273,13 @@ export const OPERATIONS: readonly CliOperation[] = [
     "body": {
       "description": "Omitted fields are untouched.",
       "fields": [
+        {
+          "name": "term",
+          "type": "string",
+          "description": "Renames the keyword: the new term is tracked from now on, with no look-back, and the keyword keeps its id, its settings and the mentions the old term found. Wrap it in double quotes for the exact phrase only. A 409 when its group already tracks the new term.",
+          "required": false,
+          "nullable": false
+        },
         {
           "name": "kind",
           "type": "string",
@@ -428,6 +435,55 @@ export const OPERATIONS: readonly CliOperation[] = [
       }
     ],
     "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "duplicateKeyword",
+    "method": "POST",
+    "path": "/v1/keywords/{id}/duplicate",
+    "summary": "Duplicate a keyword",
+    "description": "A new keyword with this one's settings and a new `term` (or the same term in another group): its kind, platforms, context, every matching rule, its monthly mention cap and its comments setting. Review apps and feeds are copied only when listed in `include`. It is a new keyword: $5 per month, and the newest posts of the last 30 days come in at once, as with any new keyword.",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Keyword id (kw_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "term",
+          "type": "string",
+          "description": "The term of the copy. The same term as the original only in another group (groupId): a term is tracked once per group. Wrap it in double quotes for the exact phrase only.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "groupId",
+          "type": "string",
+          "description": "The group of the copy (grp_...); omit for the original's group.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "include",
+          "type": "array",
+          "description": "Also copy these: reviewSources (its review apps) and feeds (its RSS or Atom feeds). Off by default, since two keywords on one app or feed collect, and bill, every review or item twice.",
+          "enum": [
+            "reviewSources",
+            "feeds"
+          ],
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        }
+      ]
+    },
     "response": "json"
   },
   {

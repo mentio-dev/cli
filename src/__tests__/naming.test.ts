@@ -52,6 +52,7 @@ describe('commandName', () => {
         'groups:update',
         'keywords:create',
         'keywords:delete',
+        'keywords:duplicate',
         'keywords:get',
         'keywords:health',
         'keywords:list',
