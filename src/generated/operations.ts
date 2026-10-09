@@ -80,7 +80,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "cap",
           "type": "object",
-          "description": "A monthly mention cap; omit or null for none.",
+          "description": "A mention cap per day, week or month (per, default month); omit or null for none.",
           "required": false,
           "nullable": true
         },
@@ -338,7 +338,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "cap",
           "type": "object",
-          "description": "Replaces the monthly mention cap; null removes it. A cap above this month's count resumes a capped keyword at once, one at or under it pauses it.",
+          "description": "Replaces the mention cap and its period (per, default month); null removes it. A cap above the current period's count resumes a capped keyword at once, one at or under it pauses it.",
           "required": false,
           "nullable": true
         },
