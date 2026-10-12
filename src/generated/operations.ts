@@ -744,7 +744,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "includeMuted",
         "in": "query",
         "type": "boolean",
-        "description": "true: include mentions by people you muted, hidden by default.",
+        "description": "true: include mentions by people you muted, hidden by default: muted for the workspace, or for the mention's own keyword group.",
         "required": false,
         "nullable": false
       },
@@ -866,7 +866,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "tags",
         "in": "query",
         "type": "array",
-        "description": "Only authors your workspace tagged with any of these (exact, case-sensitive). Repeatable, or comma-separated.",
+        "description": "Only authors tagged with any of these (exact, case-sensitive), in the workspace's tags or those of the mention's own keyword group. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -1034,7 +1034,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "notTags",
         "in": "query",
         "type": "array",
-        "description": "Never authors your workspace tagged with any of these.",
+        "description": "Never authors tagged with any of these, in the workspace's tags or those of the mention's own keyword group.",
         "required": false,
         "nullable": false
       },
@@ -1287,7 +1287,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "includeMuted",
         "in": "query",
         "type": "boolean",
-        "description": "true: include mentions by people you muted, hidden by default.",
+        "description": "true: include mentions by people you muted, hidden by default: muted for the workspace, or for the mention's own keyword group.",
         "required": false,
         "nullable": false
       },
@@ -1409,7 +1409,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "tags",
         "in": "query",
         "type": "array",
-        "description": "Only authors your workspace tagged with any of these (exact, case-sensitive). Repeatable, or comma-separated.",
+        "description": "Only authors tagged with any of these (exact, case-sensitive), in the workspace's tags or those of the mention's own keyword group. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -1577,7 +1577,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "notTags",
         "in": "query",
         "type": "array",
-        "description": "Never authors your workspace tagged with any of these.",
+        "description": "Never authors tagged with any of these, in the workspace's tags or those of the mention's own keyword group.",
         "required": false,
         "nullable": false
       },
@@ -1838,7 +1838,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "includeMuted",
         "in": "query",
         "type": "boolean",
-        "description": "true: include mentions by people you muted, hidden by default.",
+        "description": "true: include mentions by people you muted, hidden by default: muted for the workspace, or for the mention's own keyword group.",
         "required": false,
         "nullable": false
       },
@@ -1960,7 +1960,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "tags",
         "in": "query",
         "type": "array",
-        "description": "Only authors your workspace tagged with any of these (exact, case-sensitive). Repeatable, or comma-separated.",
+        "description": "Only authors tagged with any of these (exact, case-sensitive), in the workspace's tags or those of the mention's own keyword group. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -2128,7 +2128,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "notTags",
         "in": "query",
         "type": "array",
-        "description": "Never authors your workspace tagged with any of these.",
+        "description": "Never authors tagged with any of these, in the workspace's tags or those of the mention's own keyword group.",
         "required": false,
         "nullable": false
       },
@@ -2260,7 +2260,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       },
@@ -2561,7 +2561,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       },
@@ -2871,7 +2871,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people/{id}",
     "summary": "Get a person",
-    "description": "One person as your workspace sees them. An account merged into someone resolves to that person. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "One person as your workspace sees them. An account merged into someone resolves to that person. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
     "tag": "People",
     "params": [
       {
@@ -2886,7 +2886,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -2899,7 +2899,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/people/{id}",
     "summary": "Update your annotations on a person",
-    "description": "Tags, notes, mute, and the outreach owner (a workspace member; null clears) and stage, for your workspace only. Mute hides their posts from your feed and every channel; ingest and billing never change. With `groupId` the annotations are that keyword group's own; `muted` is not supported there yet and is a 400.",
+    "description": "Tags, notes, mute, and the outreach owner (a workspace member; null clears) and stage, for your workspace only. Mute hides their posts from your feed and every channel; ingest and billing never change. With `groupId` the annotations are that keyword group's own: `muted` hides the person, and the accounts that group merged into them, from the mentions of that group's keywords only (feed, alerts and digests), and the group's tags show on those mentions next to the workspace's. A mute set without `groupId` hides them everywhere.",
     "tag": "People",
     "params": [
       {
@@ -2914,7 +2914,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -2939,6 +2939,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "muted",
           "type": "boolean",
+          "description": "true hides their posts from the feed, the alerts and the digests; false shows them again. Without groupId, for every keyword of the workspace; with groupId, for the mentions of that group's keywords only, leaving the workspace's mute as it is.",
           "required": false,
           "nullable": false
         },
@@ -2973,7 +2974,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/merge",
     "summary": "Merge an account into a person",
-    "description": "Declare that this account and another person are the same human, for your workspace only. Their mentions, tags, notes and outreach activities combine under the person named by `into`, which keeps its owner and stage unless it had none. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Declare that this account and another person are the same human, for your workspace only. Their mentions, tags, notes and outreach activities combine under the person named by `into`, which keeps its owner and stage unless it had none. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
     "tag": "People",
     "params": [
       {
@@ -2988,7 +2989,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3011,7 +3012,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/split",
     "summary": "Undo a merge",
-    "description": "The account becomes its own person again. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "The account becomes its own person again. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
     "tag": "People",
     "params": [
       {
@@ -3026,7 +3027,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3039,7 +3040,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people/{id}/activities",
     "summary": "List outreach activities",
-    "description": "Every logged contact with this person across all their accounts, newest first (at most 200): who reached out, the channel, when, and a short note. Read it before reaching out so two teammates never contact the same person without knowing. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Every logged contact with this person across all their accounts, newest first (at most 200): who reached out, the channel, when, and a short note. Read it before reaching out so two teammates never contact the same person without knowing. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
     "tag": "People",
     "params": [
       {
@@ -3054,7 +3055,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3067,7 +3068,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/activities",
     "summary": "Log an outreach activity",
-    "description": "Record that a teammate reached out to this person: an email, a DM, a call. The first activity claims an unowned person for whoever reached out and moves not_contacted to contacted; an existing owner and a later stage are kept. `memberId` defaults to the signed-in member; an API key that omits it logs an unattributed activity, which claims nobody. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Record that a teammate reached out to this person: an email, a DM, a call. The first activity claims an unowned person for whoever reached out and moves not_contacted to contacted; an existing owner and a later stage are kept. `memberId` defaults to the signed-in member; an API key that omits it logs an unattributed activity, which claims nobody. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
     "tag": "People",
     "params": [
       {
@@ -3082,7 +3083,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3137,7 +3138,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "DELETE",
     "path": "/v1/people/{id}/activities/{activityId}",
     "summary": "Delete an outreach activity",
-    "description": "Remove a contact logged by mistake. The person's owner and stage stay as they are. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Remove a contact logged by mistake. The person's owner and stage stay as they are. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
     "tag": "People",
     "params": [
       {
@@ -3160,7 +3161,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3180,7 +3181,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3200,7 +3201,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3249,7 +3250,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3277,7 +3278,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
@@ -3328,7 +3329,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "groupId",
         "in": "query",
         "type": "string",
-        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, merges, activities and segments. Omit for the whole workspace.",
+        "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
       }
