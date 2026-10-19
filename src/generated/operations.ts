@@ -113,6 +113,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "required": false,
           "nullable": false,
           "items": "object"
+        },
+        {
+          "name": "readsWorkspaceFeeds",
+          "type": "boolean",
+          "description": "Whether the keyword also reads the workspace's feeds (GET /v1/feeds); default true. A new keyword reading them gets the look-back of the 8 most recently connected.",
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -371,6 +378,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "required": false,
           "nullable": false,
           "items": "object"
+        },
+        {
+          "name": "readsWorkspaceFeeds",
+          "type": "boolean",
+          "description": "true: the keyword also reads the workspace's feeds (GET /v1/feeds), live from now on. false: its own feeds alone.",
+          "required": false,
+          "nullable": false
         }
       ]
     },
@@ -485,6 +499,170 @@ export const OPERATIONS: readonly CliOperation[] = [
       ]
     },
     "response": "json"
+  },
+  {
+    "operationId": "listFeeds",
+    "method": "GET",
+    "path": "/v1/feeds",
+    "summary": "List feeds",
+    "description": "The RSS and Atom feeds the workspace reads (forums, communities, blogs), newest connection first, each with how its hourly poll goes. Every keyword of the workspace with readsWorkspaceFeeds (the default) reads these feeds: an item holding its term is one of its mentions, with its matching rules, billed like any mention. Each feed is read every hour; reading it is free. At most 500 a workspace.",
+    "tag": "Feeds",
+    "params": [
+      {
+        "name": "q",
+        "in": "query",
+        "type": "string",
+        "description": "Only feeds whose address or title contains this text, case-insensitive.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Feeds per page, at most 500; default 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "offset",
+        "in": "query",
+        "type": "integer",
+        "description": "Feeds to skip, for the next page.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createFeed",
+    "method": "POST",
+    "path": "/v1/feeds",
+    "summary": "Connect a feed",
+    "description": "Connect an RSS or Atom feed: a feed's address, or a page's (a forum, a community, a blog), in which case the feed the page advertises is used, else a usual address such as /feed or /rss. Every keyword of the workspace with readsWorkspaceFeeds (the default) reads these feeds: an item holding its term is one of its mentions, with its matching rules, billed like any mention. Each feed is read every hour; reading it is free. At most 500 a workspace. A new feed brings each reading keyword the newest 10 items of the last 30 days that hold its term, never as instant alerts. A feed the workspace reads already comes back with 200 (connecting is idempotent). A members-only forum answers `feed_login_required`: send it again with `auth` (a cookie or a header), stored encrypted and read for this workspace alone.",
+    "tag": "Feeds",
+    "params": [],
+    "body": {
+      "description": "One feed to connect, with a sign-in when it is members-only.",
+      "fields": [
+        {
+          "name": "url",
+          "type": "string",
+          "description": "A feed's address (https://forum.example.com/posts.rss), or a page's (https://forum.example.com): the feed the page advertises is used.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "auth",
+          "type": "string",
+          "description": "A sign-in for a members-only feed: a cookie, or one header. Write-only: stored encrypted, sent to the feed's own site alone, never shown again. A feed with a sign-in is read for this workspace alone.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "importFeeds",
+    "method": "POST",
+    "path": "/v1/feeds/import",
+    "summary": "Connect many feeds",
+    "description": "Connect up to 100 feeds in one call, each { url } or { url, auth } for a members-only one, checked on its own and reported added, already or failed, in the order sent: one that fails never stops the others. A failure carries the error code POST /v1/feeds would answer for that address (feed_login_required: send it again with auth). Every keyword of the workspace with readsWorkspaceFeeds (the default) reads these feeds: an item holding its term is one of its mentions, with its matching rules, billed like any mention. Each feed is read every hour; reading it is free. At most 500 a workspace. The first 8 added bring each reading keyword the newest 10 matching items of the last 30 days; the rest start from now.",
+    "tag": "Feeds",
+    "params": [],
+    "body": {
+      "fields": [
+        {
+          "name": "feeds",
+          "type": "array",
+          "description": "Up to 100 feeds, each { url } or { url, auth } for a members-only one. Each is checked on its own: one that fails never stops the others.",
+          "required": true,
+          "nullable": false,
+          "items": "object"
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getFeed",
+    "method": "GET",
+    "path": "/v1/feeds/{id}",
+    "summary": "Get a feed",
+    "tag": "Feeds",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Feed id (fd_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateFeed",
+    "method": "PATCH",
+    "path": "/v1/feeds/{id}",
+    "summary": "Update a feed",
+    "description": "Rename a feed (title, null clears it), or set its sign-in for a members-only forum (auth: a cookie copied from your browser, or one header such as Discourse's Api-Key). A sign-in is checked by reading the feed with it, stored encrypted, sent to the feed's own site alone and never shown again; the feed is then read for this workspace alone. auth: null removes it.",
+    "tag": "Feeds",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Feed id (fd_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "description": "Omitted fields are untouched.",
+      "fields": [
+        {
+          "name": "title",
+          "type": "string",
+          "description": "Your name for the feed; null clears it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "auth",
+          "type": "string",
+          "description": "Replaces the sign-in (checked by reading the feed with it first); null removes it and the feed is read signed out again.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteFeed",
+    "method": "DELETE",
+    "path": "/v1/feeds/{id}",
+    "summary": "Disconnect a feed",
+    "description": "The workspace stops reading the feed. Its mentions stay; a keyword naming the same feed in its own `feeds` keeps reading it.",
+    "tag": "Feeds",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Feed id (fd_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
   },
   {
     "operationId": "getFilters",
@@ -3934,7 +4112,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "kind",
         "in": "query",
         "type": "string",
-        "description": "Only these kinds, comma separated: mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing.",
+        "description": "Only these kinds, comma separated: mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing, feed.failing (feed.recovered never opens an item).",
         "required": false,
         "nullable": false
       },
@@ -5479,7 +5657,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "events",
           "type": "array",
-          "description": "Replaces the whole set of account events the channel receives. A webhook takes any of them; a Slack, email or Telegram channel the attention events only (mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing). An empty list unsubscribes it from all of them.",
+          "description": "Replaces the whole set of account events the channel receives. A webhook takes any of them; a Slack, email or Telegram channel the attention events only (mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing, feed.failing, feed.recovered). An empty list unsubscribes it from all of them.",
           "enum": [
             "keyword.capped",
             "keyword.paused_for_balance",
@@ -5490,7 +5668,9 @@ export const OPERATIONS: readonly CliOperation[] = [
             "mention.spike",
             "sentiment.negative_spike",
             "keyword.noisy",
-            "channel.failing"
+            "channel.failing",
+            "feed.failing",
+            "feed.recovered"
           ],
           "required": false,
           "nullable": false,
@@ -5636,6 +5816,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "sentiment.negative_spike",
             "keyword.noisy",
             "channel.failing",
+            "feed.failing",
+            "feed.recovered",
             "keyword.capped",
             "keyword.paused_for_balance",
             "keyword.resumed",
