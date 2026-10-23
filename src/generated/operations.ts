@@ -92,6 +92,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "nullable": false
         },
         {
+          "name": "display",
+          "type": "object",
+          "description": "Which of this keyword's mentions you see, by language and country; each list is replaced when sent, kept when omitted. Hidden mentions are still billed.",
+          "required": false,
+          "nullable": false
+        },
+        {
           "name": "groupId",
           "type": "string",
           "description": "The group to track it in (grp_...); omit for the workspace's default group. A term may be tracked once per group.",
@@ -353,6 +360,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "comments",
           "type": "object",
           "description": "Comments under this keyword's mentions; omitted fields are untouched (on create: off, 20 per post).",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "display",
+          "type": "object",
+          "description": "Which of this keyword's mentions you see, by language and country; each list is replaced when sent, kept when omitted. Hidden mentions are still billed.",
           "required": false,
           "nullable": false
         },
@@ -935,6 +949,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "includeHidden",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: include mentions their keyword's display lists hide (a language or country it does not show), hidden by default.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "includeDuplicates",
         "in": "query",
         "type": "boolean",
@@ -1513,7 +1535,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.csv",
     "summary": "Export mentions as CSV",
-    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only), title and image_url (where the platform has them), duplicate_of (the mention a cross-post copies; the CSV keeps one row per mention, copies included, so it adds up to the bill), kind (post, comment or repository), parent_url (the post a comment answers), comments (comments of it delivered to you), subreddit and flair (Reddit only), country (where the author is, ISO 3166-1 alpha-2, empty when unknown) and organization (true when a company or organization posted). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only), title and image_url (where the platform has them), duplicate_of (the mention a cross-post copies; the CSV keeps one row per mention, copies included; with includeHidden=true, the mentions a keyword hides by language or country too, it adds up to the bill), kind (post, comment or repository), parent_url (the post a comment answers), comments (comments of it delivered to you), subreddit and flair (Reddit only), country (where the author is, ISO 3166-1 alpha-2, empty when unknown) and organization (true when a company or organization posted). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
     "tag": "Mentions",
     "params": [
       {
@@ -1622,6 +1644,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "boolean",
         "description": "true: include mentions by people you muted, hidden by default: muted for the workspace, or for the mention's own keyword group.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "includeHidden",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: include mentions their keyword's display lists hide (a language or country it does not show), hidden by default.",
         "required": false,
         "nullable": false
       },
@@ -2321,6 +2351,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "boolean",
         "description": "true: include mentions by people you muted, hidden by default: muted for the workspace, or for the mention's own keyword group.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "includeHidden",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: include mentions their keyword's display lists hide (a language or country it does not show), hidden by default.",
         "required": false,
         "nullable": false
       },
@@ -5378,7 +5416,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out), language (ISO 639-1; \"unknown\" for posts without one), country (where the author is, ISO 3166-1 alpha-2; \"unknown\" for posts without one), subreddit (Reddit posts only, most active first; `share` stays a percent of the whole window, every platform included).",
+        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out), language (ISO 639-1; \"unknown\" for posts without one, \"other\" for a language the classifier recognised but does not name), country (where the author is, ISO 3166-1 alpha-2; \"unknown\" for posts nobody could place, \"other\" for a place it does not name), subreddit (Reddit posts only, most active first; `share` stays a percent of the whole window, every platform included).",
         "enum": [
           "platform",
           "keyword",
