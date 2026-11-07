@@ -17,7 +17,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/keywords",
     "summary": "Track a keyword",
-    "description": "Start tracking a word or phrase. Matching, classification and delivery begin on the next poll. A funded workspace tracks up to 500 keywords; each costs $5 per month, deducted daily from the balance. `matching` narrows what the term matches (required and excluded terms, excluded authors, case, subreddits, GitHub repository events) before a mention is stored, so a rejected post is never billed; `context` is a sentence the classifier reads for this keyword only. `cap` puts a monthly ceiling on its matched mentions: at the cap it stops matching until the first of the next month (UTC) or until the cap is raised, while its daily keyword charge continues.",
+    "description": "Start tracking a word or phrase; mentions arrive from the next poll.\n\n- $5 a month, charged daily; up to 500 per funded workspace.\n- `matching` filters posts before they are stored, so rejected posts never bill.\n- `cap` limits matched mentions per period.\n\nSee [Keywords](/guides/keywords).",
     "tag": "Keywords",
     "params": [],
     "body": {
@@ -67,7 +67,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "context",
           "type": "string",
-          "description": "A sentence the classifier reads for this keyword only, on top of the company profile or the group's own description (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
+          "description": "A sentence the classifier reads for this keyword only, on top of the company profile or group description: what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
           "required": false,
           "nullable": true
         },
@@ -109,7 +109,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "reviewSources",
           "type": "array",
-          "description": "Review pages this keyword collects, at most 10: App Store and Google Play apps, Trustpilot pages, Google Maps places. Every new review of one is a mention of the keyword, whatever its text says. Polled once a day (per country on the app stores). A newly connected page brings its last 30 days, the newest 100 reviews (per country), free and never sent as instant alerts; after that each review bills like any mention.",
+          "description": "Review pages this keyword collects (app store apps, Trustpilot pages, Google Maps places): every new review is a mention, whatever it says. Polled daily; a newly connected page brings 30 days back, free. See [Reviews](/platforms/reviews).",
           "required": false,
           "nullable": false,
           "items": "object"
@@ -117,7 +117,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "feeds",
           "type": "array",
-          "description": "RSS or Atom feeds this keyword reads, at most 20, each { url }: a feed's URL, or a page's (a forum, a community, a blog), in which case the feed the page advertises is used, else a usual address such as /feed or /rss. A URL with no feed behind it is a 400. Each feed is read every hour; an item is a mention of this keyword when it holds the term (with the keyword's matching rules), and only of keywords that named the feed. A newly connected feed brings its newest 10 items of the last 30 days that hold the term, billed like any mention and never sent as instant alerts.",
+          "description": "RSS or Atom feeds only this keyword reads: a feed's URL, or a page that advertises one (else a 400). Read hourly; an item holding the term is a mention. See [RSS](/platforms/rss#a-keywords-own-feeds).",
           "required": false,
           "nullable": false,
           "items": "object"
@@ -138,7 +138,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/keywords",
     "summary": "List keywords",
-    "description": "The keywords of the workspace with their match stats and poll health. Without parameters: every keyword, newest first. `q` searches the term and the context; `kind`, `status` and `platform` narrow the list; `sort` orders it; `limit` and `offset` page it. `total` counts the keywords that matched before paging.",
+    "description": "List the workspace's keywords with their match stats and poll health, newest first.\n\n`q` searches term and context; the other parameters filter, sort and page; `total` counts matches before paging.",
     "tag": "Keywords",
     "params": [
       {
@@ -274,7 +274,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/keywords/{id}",
     "summary": "Update a keyword",
-    "description": "Rename it (`term`: the new term is tracked from now on, with no look-back; the mentions the old term found stay), mute or unmute it, reclassify it (`kind`), change the platforms it is tracked on, its classifier `context`, its `matching` rules (each rule field optional; an empty list clears one), or its monthly mention `cap` (null removes it; a cap above this month's count resumes a capped keyword at once). Rules apply to new mentions from the next poll; stored mentions are untouched.",
+    "description": "Change a keyword's term, mute, kind, platforms, context, matching rules or mention cap.\n\n- A new `term` is tracked from now on, no look-back; old mentions stay.\n- An empty rule list clears it; `cap` null removes the cap.\n- Changes apply to new mentions only.",
     "tag": "Keywords",
     "params": [
       {
@@ -292,7 +292,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "term",
           "type": "string",
-          "description": "Renames the keyword: the new term is tracked from now on, with no look-back, and the keyword keeps its id, its settings and the mentions the old term found. Wrap it in double quotes for the exact phrase only. A 409 when its group already tracks the new term.",
+          "description": "Renames the keyword: the new term is tracked from now on, with no look-back, keeping its id, settings and old mentions. Double quotes mean the exact phrase only. 409 when its group already tracks it.",
           "required": false,
           "nullable": false
         },
@@ -341,7 +341,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "context",
           "type": "string",
-          "description": "A sentence the classifier reads for this keyword only, on top of the company profile or the group's own description (at most 300 characters): what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
+          "description": "A sentence the classifier reads for this keyword only, on top of the company profile or group description: what the term means here, what to ignore. \"Arc is our browser; ignore the geometry word.\" Null clears it.",
           "required": false,
           "nullable": true
         },
@@ -432,7 +432,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/keywords/{id}/health",
     "summary": "Get a keyword's health",
-    "description": "Whether the keyword earns what it costs over a trailing window (`range`, default 30d): a status (healthy, noisy, quiet, capped, paused, new) with the reasons in plain words, its numbers by platform and week, what it cost, the words and authors its noise is made of, and suggestions. Each suggestion carries a `patch` to send to PATCH /v1/keywords/{id} as is, and the effect it would have had, measured by running the matcher's own rules over the window's posts. `ai=true` adds a context rewritten by a language model (cached a day, at most 20 model calls an hour per workspace). Read only and never billed; the report is cached for 5 minutes, and a change to the keyword starts a fresh one. At most 30 reads a minute per workspace.",
+    "description": "Report whether a keyword earns what it costs, with reasons and suggested fixes.\n\n- Each suggestion has a `patch` for PATCH /v1/keywords/{id} and its measured effect.\n- Read only, never billed, cached 5 minutes; 30 reads a minute.\n\nSee [Keyword health](/guides/keyword-health).",
     "tag": "Keywords",
     "params": [
       {
@@ -473,7 +473,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/keywords/{id}/duplicate",
     "summary": "Duplicate a keyword",
-    "description": "A new keyword with this one's settings and a new `term` (or the same term in another group): its kind, platforms, context, every matching rule, its monthly mention cap and its comments setting. Review apps and feeds are copied only when listed in `include`. It is a new keyword: $5 per month, and the newest posts of the last 30 days come in at once, as with any new keyword.",
+    "description": "Create a keyword with this one's settings under a new term or group.\n\nIt copies kind, platforms, context, rules, cap and comments; review apps and feeds only via `include`. A new keyword: $5 a month and a 30-day look-back.",
     "tag": "Keywords",
     "params": [
       {
@@ -522,7 +522,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/feeds",
     "summary": "List feeds",
-    "description": "The RSS and Atom feeds the workspace reads (forums, communities, blogs), newest connection first, each with how its hourly poll goes. Every keyword of the workspace with readsWorkspaceFeeds (the default) reads these feeds: an item holding its term is one of its mentions, with its matching rules, billed like any mention. Each feed is read every hour; reading it is free. At most 500 a workspace.",
+    "description": "List the workspace's RSS and Atom feeds, newest first, each with its poll health.\n\nKeywords with readsWorkspaceFeeds (the default) read them hourly, for free; matching items bill as mentions. See [RSS](/platforms/rss#workspace-feeds).",
     "tag": "Feeds",
     "params": [
       {
@@ -558,7 +558,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/feeds",
     "summary": "Connect a feed",
-    "description": "Connect an RSS or Atom feed: a feed's address, or a page's (a forum, a community, a blog), in which case the feed the page advertises is used, else a usual address such as /feed or /rss. Every keyword of the workspace with readsWorkspaceFeeds (the default) reads these feeds: an item holding its term is one of its mentions, with its matching rules, billed like any mention. Each feed is read every hour; reading it is free. At most 500 a workspace. A new feed brings each reading keyword the newest 10 items of the last 30 days that hold its term, never as instant alerts. A feed the workspace reads already comes back with 200 (connecting is idempotent). A members-only forum answers `feed_login_required`: send it again with `auth` (a cookie or a header), stored encrypted and read for this workspace alone.",
+    "description": "Connect an RSS or Atom feed, or a page advertising one, for the workspace's keywords to read hourly.\n\n- Idempotent: a feed already read returns 200.\n- A members-only forum answers `feed_login_required`: resend with `auth`.\n\nSee [RSS](/platforms/rss#workspace-feeds).",
     "tag": "Feeds",
     "params": [],
     "body": {
@@ -587,7 +587,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/feeds/import",
     "summary": "Connect many feeds",
-    "description": "Connect up to 100 feeds in one call, each { url } or { url, auth } for a members-only one, checked on its own and reported added, already or failed, in the order sent: one that fails never stops the others. A failure carries the error code POST /v1/feeds would answer for that address (feed_login_required: send it again with auth). Every keyword of the workspace with readsWorkspaceFeeds (the default) reads these feeds: an item holding its term is one of its mentions, with its matching rules, billed like any mention. Each feed is read every hour; reading it is free. At most 500 a workspace. The first 8 added bring each reading keyword the newest 10 matching items of the last 30 days; the rest start from now.",
+    "description": "Connect up to 100 feeds in one call, each reported added, already or failed, in order.\n\nA failure never stops the others and carries the code POST /v1/feeds would answer. Only the first 8 added bring a look-back. See [RSS](/platforms/rss#workspace-feeds).",
     "tag": "Feeds",
     "params": [],
     "body": {
@@ -628,7 +628,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/feeds/{id}",
     "summary": "Update a feed",
-    "description": "Rename a feed (title, null clears it), or set its sign-in for a members-only forum (auth: a cookie copied from your browser, or one header such as Discourse's Api-Key). A sign-in is checked by reading the feed with it, stored encrypted, sent to the feed's own site alone and never shown again; the feed is then read for this workspace alone. auth: null removes it.",
+    "description": "Rename a feed, or set its sign-in for a members-only forum.\n\n`auth` is a browser cookie or one header (such as Discourse's Api-Key), checked, stored encrypted and never shown; the feed is then read for this workspace alone. null removes it.",
     "tag": "Feeds",
     "params": [
       {
@@ -686,7 +686,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/filters",
     "summary": "Get the workspace filters",
-    "description": "The noise rules applied to every keyword before a mention is stored: excluded terms and authors, excluded GitHub repositories, and the subreddits Reddit posts may (or may not) come from. A post they reject is never classified, delivered or billed. Keyword-level rules live on each keyword (`matching`); both apply.",
+    "description": "Read the workspace's noise rules, applied to every keyword before a mention is stored.\n\nA rejected post is never classified, delivered or billed. Keyword rules (`matching`) apply too.",
     "tag": "Filters",
     "params": [],
     "body": null,
@@ -697,7 +697,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/filters",
     "summary": "Update the workspace filters",
-    "description": "Replace any of the lists; an omitted list is untouched and an empty one clears it. Entries are stored in canonical form (terms lowercased, authors as profile links or bare names, repositories as owner/name, subreddits without r/). Takes effect on new mentions within a minute; stored mentions are untouched.",
+    "description": "Replace any of the workspace's noise-rule lists; omitted lists stay, empty ones clear.\n\nEntries are stored canonically (lowercase terms, authors as profile links or names, owner/name repositories, subreddits without r/). Applies to new mentions within a minute.",
     "tag": "Filters",
     "params": [],
     "body": {
@@ -743,7 +743,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/mentions/{id}",
     "summary": "Update a mention",
-    "description": "The one write on a mention. Set status to ignored or done to handle it (open puts it back), assign it to a workspace member, snooze it out of the feed, leave an internal note, or correct the classifier: `relevant` true or false is your verdict (relevance becomes 100 or 0, and every list, filter, digest and report follows it), `sentiment` replaces the label; null withdraws a verdict and restores the classifier's value. Omitted fields are untouched. Delivery and billing never change.",
+    "description": "Triage, assign, snooze, annotate or correct the classification of a mention.\n\n- `relevant` and `sentiment` are your verdict; every list, digest and report follows it. null restores the classifier's.\n- Omitted fields stay. Delivery and billing never change.",
     "tag": "Mentions",
     "params": [
       {
@@ -794,7 +794,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "relevant",
           "type": "boolean",
-          "description": "Your verdict on relevance, correcting the classifier: true sets relevance to 100 and puts a filtered mention back in the relevant feed, false sets it to 0 and takes it out; null withdraws the verdict and restores the classifier's score. Never billed or unbilled. A mention still being classified answers 409 classification_pending.",
+          "description": "Your verdict: true sets relevance to 100 (a filtered mention becomes relevant), false to 0; null restores the classifier's score. Billing never changes. 409 classification_pending while it is still being classified.",
           "required": false,
           "nullable": true
         },
@@ -819,7 +819,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/{id}",
     "summary": "Get a mention",
-    "description": "One mention by id, as it appears in the list: the post, its author with reach and your tags, the classification, the priority score and the triage fields. Ids belong to your organization; any other id is a 404.",
+    "description": "Get one mention by id, as it appears in the list.\n\nIt carries the post, its author with reach and your tags, the classification, the priority score and the triage fields. Ids belong to your organization; any other id is a 404.",
     "tag": "Mentions",
     "params": [
       {
@@ -839,7 +839,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions",
     "summary": "List mentions",
-    "description": "Mentions matched to your keywords, filtered and paginated. Default order is newest match first; sort=priority ranks the last 30 days of matches by attention score. Page with nextCursor, passing the same filters and sort. A mention is one post matched to one keyword. alertId applies an alert rule's filter on top of the others: the same mentions that rule would send. anyOf adds OR: URL-encoded JSON groups of conditions, at least one of which must hold on top of every other filter.",
+    "description": "List the mentions matched to your keywords, newest match first, filtered and cursor-paginated.\n\n- A mention is one post matched to one keyword.\n- `sort=priority` ranks the last 30 days by attention score.\n- `alertId` applies that alert rule's filter; `anyOf` adds OR. See [Conventions](/conventions#or-across-groups-anyof).",
     "tag": "Mentions",
     "params": [
       {
@@ -1476,7 +1476,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "anyOf",
         "in": "query",
         "type": "string",
-        "description": "OR across groups of conditions, as URL-encoded JSON: [{\"platforms\":[\"reddit\"],\"sentiments\":[\"negative\"]},{\"intents\":[\"buy_intent\"]}] is \"negative on Reddit, or buying intent anywhere\". Each group holds the conditions of a view filter (lists any-of, not lists none-of, all ANDed); a mention passes when at least one group holds, and every other filter here still applies. 1 to 10 groups, none empty, no nesting.",
+        "description": "OR across groups of conditions, as URL-encoded JSON: a mention passes when one group holds, on top of every other filter. Each group holds view-filter conditions, no nesting. See [anyOf](/conventions#or-across-groups-anyof).",
         "required": false,
         "nullable": false
       },
@@ -1541,7 +1541,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.csv",
     "summary": "Export mentions as CSV",
-    "description": "The same mentions GET /v1/mentions would list for these filters, as CSV, newest matched first (the order they entered your feed, which can differ from the post date): id, published_at, platform, keyword, author, author_url, author_followers, relevance, sentiment, intents (pipe-separated), language, confidence, status, relevant, delivered, url, links (pipe-separated), text (first 1,000 characters), group, group_external_id, rating and app_id (app store reviews only), title and image_url (where the platform has them), duplicate_of (the mention a cross-post copies; the CSV keeps one row per mention, copies included; with includeHidden=true, the mentions a keyword hides by language or country too, it adds up to the bill), kind (post, comment or repository), parent_url (the post a comment answers), comments (comments of it delivered to you), subreddit and flair (Reddit only), country (where the author is, ISO 3166-1 alpha-2, empty when unknown) and organization (true when a company or organization posted). Capped at 10,000 rows; the X-Mentions-Truncated header says when the cap cut the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "Export the mentions GET /v1/mentions would list as CSV, newest matched first.\n\n- Capped at 10,000 rows; X-Mentions-Truncated says when cut.\n- 6 exports a minute per workspace.\n\nColumns: see [Exports](/guides/exports).",
     "tag": "Mentions",
     "params": [
       {
@@ -2178,7 +2178,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "anyOf",
         "in": "query",
         "type": "string",
-        "description": "OR across groups of conditions, as URL-encoded JSON: [{\"platforms\":[\"reddit\"],\"sentiments\":[\"negative\"]},{\"intents\":[\"buy_intent\"]}] is \"negative on Reddit, or buying intent anywhere\". Each group holds the conditions of a view filter (lists any-of, not lists none-of, all ANDed); a mention passes when at least one group holds, and every other filter here still applies. 1 to 10 groups, none empty, no nesting.",
+        "description": "OR across groups of conditions, as URL-encoded JSON: a mention passes when one group holds, on top of every other filter. Each group holds view-filter conditions, no nesting. See [anyOf](/conventions#or-across-groups-anyof).",
         "required": false,
         "nullable": false
       },
@@ -2215,7 +2215,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/{id}/comments",
     "summary": "List the comments of a mention",
-    "description": "The comments under a mention's post, newest first: every comment in the thread, whether or not it names your keyword. Read once, about a day after the post, for mentions scored relevant whose keyword has comments enabled (keywords.comments), on Hacker News, Bluesky, GitHub, Stack Overflow, DEV, YouTube and Reddit; empty before that and for other keywords. Each comment delivered costs $0.008 on the comments line of the bill, once per workspace. A comment that itself names one of your keywords is also a mention: `mentionId` links it. Two mentions of one post (two keywords) list the same thread.",
+    "description": "List the comments under a mention's post, newest first, whether or not they name your keyword.\n\nFilled for relevant mentions of keywords with comments on, read several times as the thread grows; each comment delivered costs $0.008. See [Comments](/guides/comments).",
     "tag": "Mentions",
     "params": [
       {
@@ -2251,7 +2251,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/mentions/export.json",
     "summary": "Export mentions as JSON",
-    "description": "The same mentions GET /v1/mentions would list for these filters, in one response, newest matched first (the order they entered your feed): every row is the full Mention object the list returns, text included. Capped at 10,000 mentions; `truncated` (and the X-Mentions-Truncated header) says when the cap cut the list. Shares the CSV export's limit: at most 6 exports per minute per workspace, either format; a 429 carries Retry-After.",
+    "description": "Export the mentions GET /v1/mentions would list as one JSON response, newest matched first.\n\n- Full Mention objects, capped at 10,000; `truncated` says when cut.\n- Shares the CSV export's 6 a minute.\n\nSee [Exports](/guides/exports).",
     "tag": "Mentions",
     "params": [
       {
@@ -2888,7 +2888,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "anyOf",
         "in": "query",
         "type": "string",
-        "description": "OR across groups of conditions, as URL-encoded JSON: [{\"platforms\":[\"reddit\"],\"sentiments\":[\"negative\"]},{\"intents\":[\"buy_intent\"]}] is \"negative on Reddit, or buying intent anywhere\". Each group holds the conditions of a view filter (lists any-of, not lists none-of, all ANDed); a mention passes when at least one group holds, and every other filter here still applies. 1 to 10 groups, none empty, no nesting.",
+        "description": "OR across groups of conditions, as URL-encoded JSON: a mention passes when one group holds, on top of every other filter. Each group holds view-filter conditions, no nesting. See [anyOf](/conventions#or-across-groups-anyof).",
         "required": false,
         "nullable": false
       },
@@ -2925,7 +2925,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people/export.csv",
     "summary": "Export people as CSV",
-    "description": "The same list as GET /v1/people (segmentId included) as CSV, one row per person with their contact columns: handle, followers, email, website, company, location, tags, then outreach stage, owner and last contacted. Capped at 5,000 people. `groupId` scopes the export like the list. At most 6 exports per minute per workspace; a 429 carries Retry-After.",
+    "description": "Export the GET /v1/people list as CSV, one row per person with contact and outreach columns.\n\nCapped at 5,000 people; 6 exports a minute. See [Exports](/guides/exports#people-columns).",
     "tag": "People",
     "params": [
       {
@@ -3229,7 +3229,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people",
     "summary": "List people",
-    "description": "The people behind your mentions: one row per person, with their accounts, reach, public profile, per-workspace stats, your annotations and where your outreach stands. Filter by platform, tag, follower range, mention counts, intents seen, keyword kinds mentioned or never mentioned, outreach stage, owner, automated (bot accounts, whose matched posts are mostly machine-made), or a saved segment. Offset-paginated with a total. With `groupId`, only the people who mentioned that keyword group's keywords, counted over those mentions, with that group's own annotations, merges, outreach and segments.",
+    "description": "List the people behind your mentions, with accounts, reach, profile, stats, your annotations and outreach.\n\nFilter by platform, tag, followers, counts, intents, keyword kinds, outreach, automated or segment; offset-paginated. `groupId` scopes it to one keyword group. See [People](/guides/people).",
     "tag": "People",
     "params": [
       {
@@ -3549,7 +3549,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people/{id}",
     "summary": "Get a person",
-    "description": "One person as your workspace sees them. An account merged into someone resolves to that person. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "One person as your workspace sees them. An account merged into someone resolves to that person.\n\nWith `groupId`, it acts inside that keyword group; see [Groups](/guides/groups#people-and-segments-by-group).",
     "tag": "People",
     "params": [
       {
@@ -3577,7 +3577,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/people/{id}",
     "summary": "Update your annotations on a person",
-    "description": "Tags, notes, mute, and the outreach owner (a workspace member; null clears) and stage, for your workspace only. Mute hides their posts from your feed and every channel; ingest and billing never change. With `groupId` the annotations are that keyword group's own: `muted` hides the person, and the accounts that group merged into them, from the mentions of that group's keywords only (feed, alerts and digests), and the group's tags show on those mentions next to the workspace's. A mute set without `groupId` hides them everywhere.",
+    "description": "Set a person's tags, notes, mute, outreach owner and stage, for your workspace only.\n\nMute hides their posts from the feed and every channel; billing never changes. With `groupId` the annotations are that group's own; see [People](/guides/people).",
     "tag": "People",
     "params": [
       {
@@ -3617,7 +3617,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "muted",
           "type": "boolean",
-          "description": "true hides their posts from the feed, the alerts and the digests; false shows them again. Without groupId, for every keyword of the workspace; with groupId, for the mentions of that group's keywords only, leaving the workspace's mute as it is.",
+          "description": "true hides their posts from the feed, alerts and digests; false shows them again. Without groupId for the whole workspace; with it, for that group's keywords only.",
           "required": false,
           "nullable": false
         },
@@ -3652,7 +3652,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/merge",
     "summary": "Merge an account into a person",
-    "description": "Declare that this account and another person are the same human, for your workspace only. Their mentions, tags, notes and outreach activities combine under the person named by `into`, which keeps its owner and stage unless it had none. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Declare that this account and another person are the same human, for your workspace only.\n\nEverything combines under `into`, which keeps its owner and stage unless it had none.\n\nWith `groupId`, it acts inside that keyword group; see [Groups](/guides/groups#people-and-segments-by-group).",
     "tag": "People",
     "params": [
       {
@@ -3690,7 +3690,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/split",
     "summary": "Undo a merge",
-    "description": "The account becomes its own person again. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "The account becomes its own person again.\n\nWith `groupId`, it acts inside that keyword group; see [Groups](/guides/groups#people-and-segments-by-group).",
     "tag": "People",
     "params": [
       {
@@ -3718,7 +3718,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/people/{id}/activities",
     "summary": "List outreach activities",
-    "description": "Every logged contact with this person across all their accounts, newest first (at most 200): who reached out, the channel, when, and a short note. Read it before reaching out so two teammates never contact the same person without knowing. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "List every logged contact with this person, newest first (at most 200): who, channel, when, note.\n\nRead it before reaching out.\n\nWith `groupId`, it acts inside that keyword group; see [Groups](/guides/groups#people-and-segments-by-group).",
     "tag": "People",
     "params": [
       {
@@ -3746,7 +3746,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/people/{id}/activities",
     "summary": "Log an outreach activity",
-    "description": "Record that a teammate reached out to this person: an email, a DM, a call. The first activity claims an unowned person for whoever reached out and moves not_contacted to contacted; an existing owner and a later stage are kept. `memberId` defaults to the signed-in member; an API key that omits it logs an unattributed activity, which claims nobody. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Record that a teammate reached out to this person: an email, a DM, a call.\n\nThe first claims an unowned person and marks them contacted; without `memberId`, a key's activity claims nobody.\n\nWith `groupId`, it acts inside that keyword group; see [Groups](/guides/groups#people-and-segments-by-group).",
     "tag": "People",
     "params": [
       {
@@ -3816,7 +3816,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "DELETE",
     "path": "/v1/people/{id}/activities/{activityId}",
     "summary": "Delete an outreach activity",
-    "description": "Remove a contact logged by mistake. The person's owner and stage stay as they are. With `groupId`, the call works inside that keyword group: its people, and its own tags, notes, mute, merges and activities, apart from the workspace's and from every other group's.",
+    "description": "Remove a contact logged by mistake. The person's owner and stage stay as they are.\n\nWith `groupId`, it acts inside that keyword group; see [Groups](/guides/groups#people-and-segments-by-group).",
     "tag": "People",
     "params": [
       {
@@ -3852,7 +3852,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/segments",
     "summary": "List segments",
-    "description": "Your saved segments, each with the number of people in it right now (segments are evaluated on every read, never materialized), plus presets you can save as a starting point. Pass a segment id to GET /v1/people to list its members. With `groupId`, that keyword group's own segments, counted over its own people; without it, the workspace's. A segment belongs to one scope and is not visible from another.",
+    "description": "List your saved segments with live member counts, plus presets to start from.\n\nPass a segment id to GET /v1/people for its members. `groupId` reads that group's own segments; each belongs to one scope.",
     "tag": "Segments",
     "params": [
       {
@@ -3872,7 +3872,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/segments",
     "summary": "Create a segment",
-    "description": "Save a named filter over your people. With `groupId` the segment belongs to that keyword group: it is listed, counted and changed only there, and its name only has to be unique in the group.",
+    "description": "Save a named filter over your people.\n\nWith `groupId` the segment belongs to that keyword group: it is listed, counted and changed only there, and its name only has to be unique in the group.",
     "tag": "Segments",
     "params": [
       {
@@ -4020,7 +4020,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/views",
     "summary": "List views",
-    "description": "The saved views of the workspace, oldest first. A view is a named filter over mentions: pass its id as `viewId` to GET /v1/mentions or the export to read exactly what it selects.",
+    "description": "List the workspace's saved views, oldest first.\n\nA view is a named filter over mentions: pass its id as `viewId` to GET /v1/mentions or the export to read exactly what it selects.",
     "tag": "Views",
     "params": [],
     "body": null,
@@ -4031,7 +4031,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/views",
     "summary": "Save a view",
-    "description": "Save a named filter over mentions. The filter takes the same fields as GET /v1/mentions (lists are any-of, `not` lists none-of, every condition ANDed), plus `anyOf`, groups of those conditions of which at least one must hold; an empty filter is every mention. Nothing is materialized: the view selects whatever matches when it is read.",
+    "description": "Save a named filter over mentions, evaluated whenever it is read.\n\nThe filter takes GET /v1/mentions' fields plus `anyOf`; an empty filter is every mention. See [Views](/guides/views).",
     "tag": "Views",
     "params": [],
     "body": {
@@ -4147,7 +4147,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/attention",
     "summary": "List attention items",
-    "description": "What needs a person, newest first: a keyword whose mentions spiked in the last hour (mention.spike), whose negative share of the last 24 hours jumped (sentiment.negative_spike), that turned noisy (keyword.noisy), or a channel whose last sends all failed (channel.failing). Detected once an hour; an item opens when its condition starts and resolves on its own when the condition is gone. Open items by default; `status=all` reads the history. Each opening is also an account event of the same name, which webhook, Slack, email and Telegram channels can subscribe to.",
+    "description": "List what needs a person, newest first: mention spikes, negative sentiment jumps, noisy keywords and failing channels.\n\nChecked hourly; items resolve on their own. Open items by default, `status=all` for history. Each opening is also an account event. See [Attention](/guides/attention).",
     "tag": "Attention",
     "params": [
       {
@@ -4197,7 +4197,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/attention/{id}/dismiss",
     "summary": "Dismiss an attention item",
-    "description": "Put an item away. It leaves the open list and does not come back while its condition lasts; once the condition clears, a new episode may open a new item. Idempotent.",
+    "description": "Put an attention item away. Idempotent.\n\nIt leaves the open list and does not come back while its condition lasts. Once the condition clears, a new episode may open a new item.",
     "tag": "Attention",
     "params": [
       {
@@ -4217,7 +4217,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/groups",
     "summary": "List groups",
-    "description": "The keyword groups of the workspace, the default group first, then oldest first. A group is how keywords are grouped (a customer, a campaign, a product): a term may be tracked once per group, every keyword belongs to one, and GET /v1/usage/breakdown?by=group says what each group cost. Pass `externalId` to find the group carrying your own id.",
+    "description": "List the workspace's keyword groups, default first, then oldest first.\n\nA term may be tracked once per group. Pass `externalId` to find the group carrying your own id. See [Groups](/guides/groups).",
     "tag": "Groups",
     "params": [
       {
@@ -4237,7 +4237,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/groups",
     "summary": "Create a group",
-    "description": "Create a keyword group. `name` is unique per workspace; `externalId` (optional, unique too) is your own id for it, a customer id say, so you can find it again without storing ours; `context` (optional) is the group's own company description, which the classifier reads in place of the whole workspace profile for the group's keywords. Then pass the group id as `groupId` when creating a keyword.",
+    "description": "Create a keyword group, then pass its id as `groupId` when creating keywords.\n\n`externalId` is your own id for it; `context` is its company description, read instead of the workspace profile. See [Groups](/guides/groups).",
     "tag": "Groups",
     "params": [],
     "body": {
@@ -4259,7 +4259,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "context",
           "type": "string",
-          "description": "What the classifier reads as \"the company\" for this group's keywords, in place of the WHOLE workspace profile, its relevance guidelines and competitor list included (at most 4000 characters): who the business is, what it sells, for whom, what is not it, and any rule that should apply to this group (\"ignore job posts\"). For a group per customer, the customer's description. Null: the workspace profile, as for every keyword before groups.",
+          "description": "What the classifier reads as \"the company\" for this group's keywords, instead of the WHOLE workspace profile (guidelines and competitors included). Null: the workspace profile. See [Groups](/guides/groups#a-company-description-per-group).",
           "required": false,
           "nullable": true
         }
@@ -4291,7 +4291,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/groups/{id}",
     "summary": "Update a group",
-    "description": "Rename a group, change your id for it (`externalId`, null clears) or its company description (`context`, null clears: the workspace profile applies again; new mentions are judged with it at once, old ones are not rescored). The default group can be renamed like any other but takes no description: it is the workspace itself and reads the company profile.",
+    "description": "Rename a group, or change its `externalId` or company description (`context`); null clears either.\n\nNew mentions use a new description at once; old ones are not rescored. The default group takes no description.",
     "tag": "Groups",
     "params": [
       {
@@ -4323,7 +4323,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "context",
           "type": "string",
-          "description": "Replaces the group's company description; null clears it (the workspace profile applies again). New mentions are judged with it at once; old ones are not rescored. Not on the default group (400 default_group_context): that one is the workspace itself and reads the profile.",
+          "description": "Replaces the group's company description; null clears it. New mentions are judged with it at once, old ones are not rescored. Not on the default group (400 default_group_context).",
           "required": false,
           "nullable": true
         }
@@ -4336,7 +4336,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "DELETE",
     "path": "/v1/groups/{id}",
     "summary": "Delete a group and its keywords",
-    "description": "Deletes the group and EVERY keyword in it, each the way DELETE /v1/keywords/{id} does (its mentions go with it, alert rules that named it are adjusted; charges already made stay on the usage record). Read the group first: `stats.keywords` says how many go. The default group cannot be deleted: move or delete its keywords instead.",
+    "description": "Delete a group and EVERY keyword in it, with their mentions.\n\nAlert rules naming them are adjusted; charges stay on the usage record. The default group cannot be deleted. The group's `stats.keywords` says how many go.",
     "tag": "Groups",
     "params": [
       {
@@ -4437,7 +4437,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/api-keys",
     "summary": "Create an API key",
-    "description": "Mint a key for this workspace. The key itself is returned once; only its hash is stored. `expiresAt` makes it stop working at an instant (a key for a contractor or a one-off script); it stays listed until revoked.",
+    "description": "Mint an API key for this workspace. The key itself is returned once; only its hash is stored.\n\n`expiresAt` makes it stop working at an instant (a key for a contractor or a one-off script); it stays listed until revoked.",
     "tag": "API keys",
     "params": [],
     "body": {
@@ -4506,7 +4506,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/whoami",
     "summary": "Introspect the credential",
-    "description": "The workspace this credential acts on, how the request authenticated (an API key, an OAuth access token from an MCP sign-in, or the dashboard session), whether it may write, and for a key its id and expiry. Run it first: a read key answers 403 read_only_key on every write, and a wrong workspace is the classic scripting mistake.",
+    "description": "Show the workspace this credential acts on, how it authenticated, whether it may write, and a key's id and expiry.\n\nRun it first: a read key answers 403 read_only_key on every write.",
     "tag": "Auth",
     "params": [],
     "body": null,
@@ -4539,7 +4539,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/members/invitations",
     "summary": "Invite a member",
-    "description": "Send an email invitation to join the workspace as admin or member; it expires after 48 hours. Idempotent: an address that already holds an open invitation gets it back with 200 and no second email. An address that is already a member is a 409 already_member. Team changes need a signed-in owner or admin (an OAuth token from an MCP sign-in, or the dashboard session): an API key answers 403.",
+    "description": "Invite someone by email as admin or member; the invitation expires after 48 hours.\n\nIdempotent for an open invitation (200, no second email); a member is 409 already_member. Needs a signed-in owner or admin: API keys get 403.",
     "tag": "Members",
     "params": [],
     "body": {
@@ -4591,7 +4591,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "DELETE",
     "path": "/v1/members/{id}",
     "summary": "Remove a member",
-    "description": "The person loses the workspace within a minute (their dashboard session on the next request, an OAuth token when its short cache lapses). Their mentions, notes and outreach stay. Needs a signed-in owner or admin; only an owner removes another owner, and the last owner cannot be removed (409 last_owner).",
+    "description": "Remove a member; access ends within a minute, while their mentions, notes and outreach stay.\n\nNeeds a signed-in owner or admin; only an owner removes an owner, and never the last (409 last_owner).",
     "tag": "Members",
     "params": [
       {
@@ -4611,7 +4611,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/usage",
     "summary": "Get usage and balance",
-    "description": "The prepaid balance (ledger, pending mention charges, and the effective balance the stop rule reads), the daily burn and the days it buys, the keywords the wallet runs and pauses, the matches recorded today and over 30 days, and whether tracking is stopped or the balance is low. Every matched mention bills ($0.008), relevant or not; every active keyword bills $5 a month, charged daily.",
+    "description": "Read the balance, daily burn, keywords running and paused, and recent matches: the short form of GET /v1/billing/wallet.\n\nEvery matched mention bills $0.008, relevant or not; every active keyword $5 a month, charged daily. See [Billing](/billing).",
     "tag": "Usage",
     "params": [],
     "body": null,
@@ -4622,7 +4622,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/usage/breakdown",
     "summary": "Get the usage breakdown",
-    "description": "What the workspace consumed and was charged over a window, grouped by one dimension per call (`by`: day, platform or keyword), in USD cents at list price, with the window's totals on every call. `range` reads a trailing window of UTC days ending today (default 30d); `month` reads one calendar month (YYYY-MM), the shape a bill or a per-customer margin is reconciled against. Keyword-days come from the daily tick and mention charges from the matches that billed, so a deleted keyword keeps its charges in the keyword rows (`keyword.removed`) while its mention counts read 0; the same numbers ride on each keyword as `stats.cost` for the running month. `totals.ledgerDebitCents` is what the wallet has debited so far for the window's days: mentions settle the morning after their day, so a window ending today lags `totals.totalCents` by the unsettled ones, and a closed month differs from it only by cumulative rounding. Rows are paged (`limit`, `offset`, `total`); a workspace may read this at most 30 times a minute through its keys and tokens together.",
+    "description": "Report what the workspace was charged over a window at list price, grouped by one dimension (`by`).\n\n- Rows are paged; the window's totals come on every call.\n- 30 reads a minute per workspace.\n\nSee [Cost per keyword](/billing#cost-per-keyword).",
     "tag": "Usage",
     "params": [
       {
@@ -4745,7 +4745,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/billing/top-ups",
     "summary": "Create a top-up checkout",
-    "description": "Returns a hosted checkout URL with `amountCents` prefilled (editable there, $20 to $5,000). The balance is credited when the payment lands, within a minute, and tracking the wallet had paused resumes at once. Nothing is charged by this call itself. `successUrl` must be on an origin this deployment trusts; omit it for the dashboard's billing page.",
+    "description": "Get a hosted checkout URL for a top-up; this call charges nothing.\n\nThe balance is credited within a minute of payment, and paused tracking resumes. `successUrl` must be on a trusted origin; omit it for the dashboard.",
     "tag": "Billing",
     "params": [],
     "body": {
@@ -4773,7 +4773,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/billing/wallet",
     "summary": "Get the wallet",
-    "description": "The prepaid balance in full: ledger, pending mention charges and the effective balance the stop rule reads, the daily burn and the days it buys, how many keywords run and how many the wallet paused, what a day costs and what a resume needs, the welcome credit, the newest top-up, the top-up bounds and the auto-recharge settings. `GET /v1/usage` is the short form.",
+    "description": "Read the prepaid balance in full; GET /v1/usage is the short form.\n\nIt adds what a day costs, what a resume needs, the welcome credit, the newest top-up, top-up bounds and auto-recharge settings.",
     "tag": "Billing",
     "params": [],
     "body": null,
@@ -4784,7 +4784,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/billing/ledger",
     "summary": "List ledger entries",
-    "description": "Every movement of the balance, newest first: the welcome credit, top-ups, refunds, the daily keyword-day and mention debits, adjustments. A debit row carries the UTC day it settled and the cumulative units behind it. Cursor paged.",
+    "description": "List every movement of the balance, newest first, cursor paged.\n\nRows are the welcome credit, top-ups, refunds, the daily keyword-day and mention debits, and adjustments. A debit row carries the UTC day it settled and the cumulative units behind it.",
     "tag": "Billing",
     "params": [
       {
@@ -4812,7 +4812,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/billing/invoices",
     "summary": "List receipts",
-    "description": "The orders behind the top-ups, newest first, as the merchant of record (Polar) holds them: this workspace's share of the billing customer's newest 100 orders. Empty before the first top-up.",
+    "description": "List the top-up orders, newest first, as Polar (the merchant of record) holds them.\n\nThis workspace's share of the billing customer's newest 100 orders; empty before the first top-up.",
     "tag": "Billing",
     "params": [],
     "body": null,
@@ -4966,7 +4966,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/alerts",
     "summary": "Create an alert",
-    "description": "A rule (what to watch, the filter) times channels. mode instant sends each matching mention as it happens; hourly sends one digest every UTC hour (five minutes past) for the previous full hour, nothing when it had no mention over the rule's floor, to Slack, Telegram and webhook channels only (no schedule); daily sends one digest at schedule.hour in schedule.timezone; weekly sends one a week on schedule.weekday (0 Sunday to 6 Saturday). filter.anyOf adds OR: groups of conditions in the vocabulary of the mentions list, at least one of which must hold on top of the rest of the filter.",
+    "description": "Create an alert: a rule (what to watch) sent to channels.\n\n- `mode`: instant, or hourly, daily or weekly digests; hourly never emails.\n- `filter.anyOf` adds OR groups of conditions.\n\nSee [Alerts](/alerts).",
     "tag": "Alerts",
     "params": [],
     "body": {
@@ -5070,7 +5070,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/alerts/{id}/mute",
     "summary": "Mute authors on an alert",
-    "description": "Add authors to the alert's muted list without touching the rest of its filter. Links are read the way the dashboard reads them: a post link mutes its author, twitter.com becomes x.com, a Hacker News profile keeps its id. Authors already muted are skipped, so a retry is safe. An entry that names no person (a subreddit, a story) rejects the request with that entry named.",
+    "description": "Add authors to the alert's muted list, leaving the rest of its filter.\n\nA post link mutes its author; already muted authors are skipped, so retries are safe. An entry naming no person (a subreddit) is a 400. See [Alerts](/alerts#mute-authors).",
     "tag": "Alerts",
     "params": [
       {
@@ -5102,7 +5102,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/alerts/{id}/unmute",
     "summary": "Unmute authors on an alert",
-    "description": "Remove authors from the alert's muted list without touching the rest of its filter. Name each one by the stored entry or by any link to that profile or its posts. Authors that are not muted are ignored, so a retry is safe.",
+    "description": "Remove authors from the alert's muted list without touching the rest of its filter.\n\nName each one by the stored entry or by any link to that profile or its posts. Authors that are not muted are ignored, so a retry is safe.",
     "tag": "Alerts",
     "params": [
       {
@@ -5134,7 +5134,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/analytics/summary",
     "summary": "Headline counts for a window",
-    "description": "Matched and relevant mentions, distinct posts and people, sentiment, buying intent and questions, estimated reach, and where the matches stand in triage. The window is `range` (7d, 30d, 90d, 365d, ending today) or `from` and `to`, cut into days in `timezone` (UTC by default); `keywordIds` and `platforms` narrow it; `compare=true` adds the period of the same length right before it. Time axis is the publish date.",
+    "description": "Summarize matched and relevant mentions, posts, people, sentiment, intent, reach and triage over a window.\n\nThe window is `range` or `from` and `to`, in `timezone`, by publish date; `compare=true` adds the period before.",
     "tag": "Analytics",
     "params": [
       {
@@ -5228,7 +5228,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/analytics/series",
     "summary": "Mentions over time",
-    "description": "Matched, relevant and sentiment counts per day or week across the window, as one total series or split per platform or per keyword with `by`. The window is `range` (7d, 30d, 90d, 365d, ending today) or `from` and `to`, cut into days in `timezone` (UTC by default); `keywordIds` and `platforms` narrow it; `compare=true` adds the period of the same length right before it. Time axis is the publish date.",
+    "description": "Count matched, relevant and sentiment mentions per day or week, in total or per platform or keyword (`by`).\n\nThe window is `range` or `from` and `to`, in `timezone`, by publish date; `compare=true` adds the period before.",
     "tag": "Analytics",
     "params": [
       {
@@ -5349,7 +5349,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/analytics/breakdown",
     "summary": "Mentions grouped by one dimension",
-    "description": "One table of matched, relevant and sentiment counts grouped by `by`: platform, keyword, sentiment, intent, status, hour (weekday and hour of day) or person. The window is `range` (7d, 30d, 90d, 365d, ending today) or `from` and `to`, cut into days in `timezone` (UTC by default); `keywordIds` and `platforms` narrow it; `compare=true` adds the period of the same length right before it. Time axis is the publish date.",
+    "description": "Count matched, relevant and sentiment mentions in one table, grouped by one dimension (`by`).\n\nThe window is `range` or `from` and `to`, in `timezone`, by publish date; `compare=true` adds the period before.",
     "tag": "Analytics",
     "params": [
       {
@@ -5438,7 +5438,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by: platform, keyword, sentiment (unclassified included), intent (a mention can carry several), status (open, ignored, done), hour (weekday and hour of day in `timezone`), person (who posted; anonymous posts are left out), language (ISO 639-1; \"unknown\" for posts without one, \"other\" for a language the classifier recognised but does not name), country (where the author is, ISO 3166-1 alpha-2; \"unknown\" for posts nobody could place, \"other\" for a place it does not name), subreddit (Reddit posts only, most active first; `share` stays a percent of the whole window, every platform included).",
+        "description": "The dimension to group by:\n\n- platform or keyword.\n- sentiment: unclassified included.\n- intent: a mention can carry several.\n- status: open, ignored, done.\n- hour: weekday and hour of day in `timezone`.\n- person: who posted; anonymous posts are left out.\n- language: ISO 639-1; \"unknown\" if none, \"other\" if unnamed.\n- country: the author's, ISO 3166-1 alpha-2; \"unknown\", \"other\" likewise.\n- subreddit: Reddit posts only; `share` stays of the whole window.",
         "enum": [
           "platform",
           "keyword",
@@ -5463,7 +5463,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/analytics/share-of-voice",
     "summary": "Brand against competitors",
-    "description": "Every keyword matched in the window with its counts and its share of brand plus competitor matches; topic keywords are counted but stay out of the split. The window is `range` (7d, 30d, 90d, 365d, ending today) or `from` and `to`, cut into days in `timezone` (UTC by default); `keywordIds` and `platforms` narrow it; `compare=true` adds the period of the same length right before it. Time axis is the publish date.",
+    "description": "List every keyword matched in the window with its share of brand plus competitor matches.\n\nTopic keywords are counted but stay out of the split.\n\nThe window is `range` or `from` and `to`, in `timezone`, by publish date; `compare=true` adds the period before.",
     "tag": "Analytics",
     "params": [
       {
@@ -5557,7 +5557,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/analytics/reviews",
     "summary": "Reviews: stars over a window, per review page",
-    "description": "The reviews a keyword collects (App Store, Google Play, Trustpilot, Google Maps): count, average stars, distribution, replies and open 1-2 star reviews, for the workspace and per review page with a series of average stars per `bucket`, plus the tags the unhappy reviews carry. A review matched by two keywords counts once. The window is `range` (7d, 30d, 90d, 365d, ending today) or `from` and `to`, cut into days in `timezone` (UTC by default); `keywordIds` and `platforms` narrow it; `compare=true` adds the period of the same length right before it. Time axis is the publish date.",
+    "description": "Report on your keywords' reviews: count, average stars, distribution, replies and open 1-2 star reviews.\n\nPer page too, with unhappy reviews' tags; each review counts once.\n\nThe window is `range` or `from` and `to`, in `timezone`, by publish date; `compare=true` adds the period before.",
     "tag": "Analytics",
     "params": [
       {
@@ -5719,7 +5719,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "events",
           "type": "array",
-          "description": "Replaces the whole set of account events the channel receives. A webhook takes any of them; a Slack, email or Telegram channel the attention events only (mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing, feed.failing, feed.recovered). An empty list unsubscribes it from all of them.",
+          "description": "Replaces the account events the channel receives; empty unsubscribes it from all. A webhook takes any; Slack, email and Telegram take the attention events only. See [Account events](/webhooks/account-events).",
           "enum": [
             "keyword.capped",
             "keyword.paused_for_balance",
