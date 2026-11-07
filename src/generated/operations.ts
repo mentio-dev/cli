@@ -6,7 +6,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "operationId": "getHealth",
     "method": "GET",
     "path": "/v1/health",
-    "summary": "getHealth",
+    "summary": "Check the API is up",
     "tag": "System",
     "params": [],
     "body": null,
@@ -846,7 +846,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "keywordId",
         "in": "query",
         "type": "string",
-        "description": "Only matches of this keyword.",
+        "description": "Deprecated: use keywordIds. Only matches of this keyword; combines with keywordIds as either.",
         "required": false,
         "nullable": false
       },
@@ -854,7 +854,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "string",
-        "description": "Only posts from this platform.",
+        "description": "Deprecated: use platforms. Only posts from this platform; combines with platforms as either.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -903,7 +903,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "sentiment",
         "in": "query",
         "type": "string",
-        "description": "Only this sentiment.",
+        "description": "Deprecated: use sentiments. Only this sentiment; combines with sentiments as either.",
         "enum": [
           "positive",
           "neutral",
@@ -916,7 +916,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
+        "description": "Deprecated: use intents. Only mentions carrying this intent or topic tag, combined with intents as either (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
         "required": false,
         "nullable": false
       },
@@ -985,10 +985,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "excludeAuthors",
+        "name": "notAuthors",
         "in": "query",
         "type": "array",
         "description": "Hide these authors: display names, handles or profile URLs. Repeatable, or one comma-separated value.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "excludeAuthors",
+        "in": "query",
+        "type": "array",
+        "description": "Deprecated: use notAuthors, the same filter. Both may be sent; every author named in either is hidden.",
         "required": false,
         "nullable": false
       },
@@ -1489,10 +1497,48 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "A preset window ending now: 7d is today and the six days before, in `timezone`, as in the analytics reports. Ignored when from or to is given. Omit range, from and to for no window.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "Start, inclusive: a day (YYYY-MM-DD, from its first moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "End, inclusive: a day (YYYY-MM-DD, to its last moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone that days in range, from and to are cut in (Europe/Madrid). Default UTC.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "since",
         "in": "query",
         "type": "string",
-        "description": "Only posts published at or after this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use from. Only posts published at or after this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       },
@@ -1500,7 +1546,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "until",
         "in": "query",
         "type": "string",
-        "description": "Only posts published at or before this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use to. Only posts published at or before this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       },
@@ -1528,7 +1574,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "limit",
         "in": "query",
         "type": "integer",
-        "description": "Page size, 1 to 100.",
+        "description": "Page size, 1 to 100 (default 50).",
         "required": false,
         "nullable": false
       }
@@ -1548,7 +1594,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "keywordId",
         "in": "query",
         "type": "string",
-        "description": "Only matches of this keyword.",
+        "description": "Deprecated: use keywordIds. Only matches of this keyword; combines with keywordIds as either.",
         "required": false,
         "nullable": false
       },
@@ -1556,7 +1602,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "string",
-        "description": "Only posts from this platform.",
+        "description": "Deprecated: use platforms. Only posts from this platform; combines with platforms as either.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -1605,7 +1651,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "sentiment",
         "in": "query",
         "type": "string",
-        "description": "Only this sentiment.",
+        "description": "Deprecated: use sentiments. Only this sentiment; combines with sentiments as either.",
         "enum": [
           "positive",
           "neutral",
@@ -1618,7 +1664,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
+        "description": "Deprecated: use intents. Only mentions carrying this intent or topic tag, combined with intents as either (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
         "required": false,
         "nullable": false
       },
@@ -1687,10 +1733,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "excludeAuthors",
+        "name": "notAuthors",
         "in": "query",
         "type": "array",
         "description": "Hide these authors: display names, handles or profile URLs. Repeatable, or one comma-separated value.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "excludeAuthors",
+        "in": "query",
+        "type": "array",
+        "description": "Deprecated: use notAuthors, the same filter. Both may be sent; every author named in either is hidden.",
         "required": false,
         "nullable": false
       },
@@ -2191,10 +2245,48 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "A preset window ending now: 7d is today and the six days before, in `timezone`, as in the analytics reports. Ignored when from or to is given. Omit range, from and to for no window.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "Start, inclusive: a day (YYYY-MM-DD, from its first moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "End, inclusive: a day (YYYY-MM-DD, to its last moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone that days in range, from and to are cut in (Europe/Madrid). Default UTC.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "since",
         "in": "query",
         "type": "string",
-        "description": "Only posts published at or after this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use from. Only posts published at or after this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       },
@@ -2202,7 +2294,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "until",
         "in": "query",
         "type": "string",
-        "description": "Only posts published at or before this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use to. Only posts published at or before this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       }
@@ -2258,7 +2350,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "keywordId",
         "in": "query",
         "type": "string",
-        "description": "Only matches of this keyword.",
+        "description": "Deprecated: use keywordIds. Only matches of this keyword; combines with keywordIds as either.",
         "required": false,
         "nullable": false
       },
@@ -2266,7 +2358,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "string",
-        "description": "Only posts from this platform.",
+        "description": "Deprecated: use platforms. Only posts from this platform; combines with platforms as either.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -2315,7 +2407,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "sentiment",
         "in": "query",
         "type": "string",
-        "description": "Only this sentiment.",
+        "description": "Deprecated: use sentiments. Only this sentiment; combines with sentiments as either.",
         "enum": [
           "positive",
           "neutral",
@@ -2328,7 +2420,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "intent",
         "in": "query",
         "type": "string",
-        "description": "Only mentions carrying this intent or topic tag (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
+        "description": "Deprecated: use intents. Only mentions carrying this intent or topic tag, combined with intents as either (buy_intent, question, complaint, praise, comparison, churn_intent, bug_report, pricing, hiring, event, promotional, testimonial, industry_insight, launch, feedback).",
         "required": false,
         "nullable": false
       },
@@ -2397,10 +2489,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "excludeAuthors",
+        "name": "notAuthors",
         "in": "query",
         "type": "array",
         "description": "Hide these authors: display names, handles or profile URLs. Repeatable, or one comma-separated value.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "excludeAuthors",
+        "in": "query",
+        "type": "array",
+        "description": "Deprecated: use notAuthors, the same filter. Both may be sent; every author named in either is hidden.",
         "required": false,
         "nullable": false
       },
@@ -2901,10 +3001,48 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "A preset window ending now: 7d is today and the six days before, in `timezone`, as in the analytics reports. Ignored when from or to is given. Omit range, from and to for no window.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "Start, inclusive: a day (YYYY-MM-DD, from its first moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "End, inclusive: a day (YYYY-MM-DD, to its last moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone that days in range, from and to are cut in (Europe/Madrid). Default UTC.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "since",
         "in": "query",
         "type": "string",
-        "description": "Only posts published at or after this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use from. Only posts published at or after this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       },
@@ -2912,7 +3050,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "until",
         "in": "query",
         "type": "string",
-        "description": "Only posts published at or before this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use to. Only posts published at or before this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       }
@@ -2940,7 +3078,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "string",
-        "description": "People with an account on this platform.",
+        "description": "Deprecated: use platforms. People with an account on this platform; combines with platforms as either.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -2984,7 +3122,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "tag",
         "in": "query",
         "type": "string",
-        "description": "Only people carrying this tag (exact, case-sensitive).",
+        "description": "Deprecated: use tags. Only people carrying this tag (exact, case-sensitive); combines with tags as either.",
         "required": false,
         "nullable": false
       },
@@ -2997,10 +3135,48 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "A preset window ending now: 7d is today and the six days before, in `timezone`, as in the analytics reports. Ignored when from or to is given. Omit range, from and to for no window.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "Start, inclusive: a day (YYYY-MM-DD, from its first moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "End, inclusive: a day (YYYY-MM-DD, to its last moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone that days in range, from and to are cut in (Europe/Madrid). Default UTC.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "since",
         "in": "query",
         "type": "string",
-        "description": "Only people whose first matched mention is at or after this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use from. Only people whose first matched mention is at or after this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       },
@@ -3244,7 +3420,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "string",
-        "description": "People with an account on this platform.",
+        "description": "Deprecated: use platforms. People with an account on this platform; combines with platforms as either.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -3288,7 +3464,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "tag",
         "in": "query",
         "type": "string",
-        "description": "Only people carrying this tag (exact, case-sensitive).",
+        "description": "Deprecated: use tags. Only people carrying this tag (exact, case-sensitive); combines with tags as either.",
         "required": false,
         "nullable": false
       },
@@ -3301,10 +3477,48 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "A preset window ending now: 7d is today and the six days before, in `timezone`, as in the analytics reports. Ignored when from or to is given. Omit range, from and to for no window.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "Start, inclusive: a day (YYYY-MM-DD, from its first moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "End, inclusive: a day (YYYY-MM-DD, to its last moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone that days in range, from and to are cut in (Europe/Madrid). Default UTC.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "since",
         "in": "query",
         "type": "string",
-        "description": "Only people whose first matched mention is at or after this instant (ISO 8601, or epoch ms).",
+        "description": "Deprecated: use from. Only people whose first matched mention is at or after this instant (ISO 8601, or epoch ms).",
         "required": false,
         "nullable": false
       },
@@ -4799,7 +5013,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "limit",
         "in": "query",
         "type": "integer",
-        "description": "Page size, 1 to 100 (default 25).",
+        "description": "Page size, 1 to 100 (default 50).",
         "required": false,
         "nullable": false
       }
@@ -5815,9 +6029,18 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "Opaque cursor from a previous page (`nextCursor`).",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "limit",
         "in": "query",
         "type": "integer",
+        "description": "How many deliveries, newest first, 1 to 200 (default 50).",
         "required": false,
         "nullable": false
       }

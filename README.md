@@ -22,7 +22,7 @@ mentio keywords:create --term "acme cloud" --kind brand --platforms reddit,x
 mentio mentions:search --relevant true --intent buy_intent --limit 20
 mentio mentions:update mm_7f3a... --status done --note "replied 2026-09-14"
 mentio analytics:summary --range 7d --compare true
-mentio mentions:watch --platform reddit | jq -r '.post.url'
+mentio mentions:watch --platforms reddit | jq -r '.post.url'
 ```
 
 Output is JSON: compact when piped, indented on a terminal, `--table` for lists.
@@ -63,7 +63,7 @@ Generated commands take every query parameter and body field as a flag. `--json 
 ## A live feed
 
 ```bash
-mentio mentions:watch --platform reddit --intent question --interval 30
+mentio mentions:watch --platforms reddit --intents question --interval 30
 ```
 
 Polls the API and prints each new mention as one JSON line, so it pipes into `jq`, a file, or anything that reads stdin. `--from-start` prints the current newest page first.

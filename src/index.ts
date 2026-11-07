@@ -170,7 +170,7 @@ function registerWatch(): void {
     .description('Follow the feed: print each new mention as one JSON line (tail -f for mentions)')
     .option('--interval <seconds>', 'Seconds between polls', '30')
     .option('--from-start', 'Print the current newest page first instead of only what arrives next');
-  const skip = new Set(['cursor', 'limit', 'sort', 'since', 'until']);
+  const skip = new Set(['cursor', 'limit', 'sort', 'since', 'until', 'range', 'from', 'to', 'timezone']);
   const filters = search.params.filter((p) => p.in === 'query' && !skip.has(p.name));
   for (const param of filters) addFieldOption(command, param);
   command.action(async (flags: Record<string, unknown>) => {
