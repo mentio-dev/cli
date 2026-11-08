@@ -30,6 +30,7 @@ export async function runOperation(client: Client, op: CliOperation, request: Bu
     url: op.path,
     path: request.path,
     query: request.query,
+    ...(request.headers && Object.keys(request.headers).length > 0 ? { headers: request.headers } : {}),
     ...(request.body !== undefined ? { body: request.body } : {}),
     parseAs: op.response === 'csv' ? 'text' : 'auto',
     security: BEARER,

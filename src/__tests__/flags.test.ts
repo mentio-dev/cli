@@ -74,3 +74,17 @@ describe('buildRequest', () => {
     expect(request.body).toEqual({ kind: 'email', emails: ['ops@example.com'] });
   });
 });
+
+describe('Idempotency-Key', () => {
+  it('sends --idempotency-key as the header on a create, and nothing when absent', () => {
+    const create = op('createKeyword');
+    expect(create.params.some((p) => p.in === 'header' && p.name === 'idempotency-key')).toBe(true);
+    // commander stores the flag camelCased.
+    expect(buildRequest(create, [], { term: 'acme', idempotencyKey: 'k-1' }, undefined).headers).toEqual({ 'idempotency-key': 'k-1' });
+    expect(buildRequest(create, [], { term: 'acme' }, undefined).headers).toEqual({});
+    // An unset shell variable must not silently send no key.
+    expect(() => buildRequest(create, [], { term: 'acme', idempotencyKey: '  ' }, undefined)).toThrow(UsageError);
+    // Reads have no such parameter.
+    expect(op('listKeywords').params.some((p) => p.in === 'header')).toBe(false);
+  });
+});

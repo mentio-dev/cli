@@ -84,8 +84,13 @@ export function flagHelp(field: CliField): string {
 export interface BuiltRequest {
   path: Record<string, string>;
   query: Record<string, string | number | boolean>;
+  /** Header parameters (Idempotency-Key), by their HTTP name. */
+  headers?: Record<string, string>;
   body: Record<string, ApiValue> | undefined;
 }
+
+/** commander stores `--idempotency-key` as `idempotencyKey`. */
+const camel = (name: string): string => name.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase());
 
 /** Positional arguments, flags and an optional --json body into the three
  *  parts of a request. --json is the base; flags override its fields. */
@@ -105,6 +110,16 @@ export function buildRequest(op: CliOperation, positional: string[], flags: Reco
     const value = coerce(param, String(raw));
     if (value === null || typeof value === 'object') continue;
     query[param.name] = value;
+  }
+
+  const headers: Record<string, string> = {};
+  for (const param of op.params.filter((p) => p.in === 'header')) {
+    const raw = flags[camel(param.name)] ?? flags[param.name];
+    if (raw === undefined) continue;
+    // A blank key (an unset shell variable) would silently send no key, and
+    // the script's retries would create twice: refuse it instead.
+    if (String(raw).trim() === '') throw new UsageError(`--${param.name} is empty`);
+    headers[param.name] = String(raw).trim();
   }
 
   let body: Record<string, ApiValue> | undefined;
@@ -129,5 +144,5 @@ export function buildRequest(op: CliOperation, positional: string[], flags: Reco
       if (field.required && body[field.name] === undefined) throw new UsageError(`--${field.name} is required`);
     }
   }
-  return { path, query, body };
+  return { path, query, headers, body };
 }

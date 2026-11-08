@@ -46,6 +46,17 @@ describe('runOperation', () => {
     expect(search.calls[0]?.url).toBe('https://api.test/v1/mentions?platform=reddit&relevant=true&limit=5');
   });
 
+  it('sends header parameters (Idempotency-Key)', async () => {
+    let sent: string | null = null;
+    const fetchImpl = (async (input: Request | string | URL, init?: RequestInit) => {
+      const req = input instanceof Request ? input : new Request(input, init);
+      sent = req.headers.get('idempotency-key');
+      return Response.json({ id: 'kw_1' }, { status: 201 });
+    }) as typeof fetch;
+    await runOperation(clientFor(settings, fetchImpl), op('createKeyword'), { path: {}, query: {}, headers: { 'idempotency-key': 'k-1' }, body: { term: 'acme' } });
+    expect(sent).toBe('k-1');
+  });
+
   it('treats a 204 as success with no value', async () => {
     const { fetch } = fakeFetch(() => new Response(null, { status: 204 }));
     const outcome = await runOperation(clientFor(settings, fetch), op('deleteKeyword'), { path: { id: 'kw_1' }, query: {}, body: undefined });

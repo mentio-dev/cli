@@ -19,7 +19,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Track a keyword",
     "description": "Start tracking a word or phrase; mentions arrive from the next poll.\n\n- $5 a month, charged daily; up to 500 per funded workspace.\n- `matching` filters posts before they are stored, so rejected posts never bill.\n- `cap` limits matched mentions per period.\n\nSee [Keywords](/guides/keywords).",
     "tag": "Keywords",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -611,6 +620,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "description": "Keyword id (kw_...).",
         "required": true,
         "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
       }
     ],
     "body": {
@@ -688,7 +705,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Connect a feed",
     "description": "Connect an RSS or Atom feed, or a page advertising one, for the workspace's keywords to read hourly.\n\n- Idempotent: a feed already read returns 200.\n- A members-only forum answers `feed_login_required`: resend with `auth`.\n\nSee [RSS](/platforms/rss#workspace-feeds).",
     "tag": "Feeds",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "description": "One feed to connect, with a sign-in when it is members-only.",
       "fields": [
@@ -717,7 +743,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Connect many feeds",
     "description": "Connect up to 100 feeds in one call, each reported added, already or failed, in order.\n\nA failure never stops the others and carries the code POST /v1/feeds would answer. Only the first 8 added bring a look-back. See [RSS](/platforms/rss#workspace-feeds).",
     "tag": "Feeds",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -1202,6 +1237,19 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only matches of keywords of any of these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of keywords of these kinds. Repeatable, or comma-separated.",
         "enum": [
           "brand",
           "competitor",
@@ -1959,6 +2007,19 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notKeywordKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of keywords of these kinds. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "tags",
         "in": "query",
         "type": "array",
@@ -2706,6 +2767,19 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only matches of keywords of any of these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Never matches of keywords of these kinds. Repeatable, or comma-separated.",
         "enum": [
           "brand",
           "competitor",
@@ -3495,6 +3569,38 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notStages",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody at these outreach stages. Repeatable, or comma-separated.",
+        "enum": [
+          "not_contacted",
+          "contacted",
+          "replied",
+          "in_talks",
+          "customer",
+          "not_a_fit"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLinkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody with a mention linking to any of these hosts, the host itself or a subdomain of it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notOwnerIds",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody owned by these members (user ids); `none` drops the people nobody owns. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "automated",
         "in": "query",
         "type": "boolean",
@@ -3837,6 +3943,38 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notStages",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody at these outreach stages. Repeatable, or comma-separated.",
+        "enum": [
+          "not_contacted",
+          "contacted",
+          "replied",
+          "in_talks",
+          "customer",
+          "not_a_fit"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLinkHosts",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody with a mention linking to any of these hosts, the host itself or a subdomain of it. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notOwnerIds",
+        "in": "query",
+        "type": "array",
+        "description": "Nobody owned by these members (user ids); `none` drops the people nobody owns. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "automated",
         "in": "query",
         "type": "boolean",
@@ -3953,6 +4091,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "notes",
           "type": "string",
+          "description": "Notes, up to 2,000 characters; replaces the current notes.",
           "required": false,
           "nullable": false
         },
@@ -4012,6 +4151,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
       }
     ],
     "body": {
@@ -4048,6 +4195,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
         "required": false,
         "nullable": false
       }
@@ -4104,6 +4259,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "string",
         "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
         "required": false,
         "nullable": false
       }
@@ -4235,6 +4398,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "description": "Scope to one keyword group (grp_...): only people who mentioned that group's keywords, with that group's own tags, notes, mute, merges, activities and segments. Omit for the whole workspace.",
         "required": false,
         "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
       }
     ],
     "body": {
@@ -4242,18 +4413,21 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "name",
           "type": "string",
+          "description": "Segment name, unique in its scope.",
           "required": true,
           "nullable": false
         },
         {
           "name": "description",
           "type": "string",
+          "description": "What the segment is for.",
           "required": false,
           "nullable": false
         },
         {
           "name": "filter",
           "type": "object",
+          "description": "The people filter (the fields of GET /v1/people).",
           "required": false,
           "nullable": false
         }
@@ -4320,12 +4494,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "name",
           "type": "string",
+          "description": "Segment name, unique in its scope.",
           "required": false,
           "nullable": false
         },
         {
           "name": "description",
           "type": "string",
+          "description": "What the segment is for.",
           "required": false,
           "nullable": false
         },
@@ -4386,7 +4562,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Save a view",
     "description": "Save a named filter over mentions, evaluated whenever it is read.\n\nThe filter takes GET /v1/mentions' fields plus `anyOf`; an empty filter is every mention. See [Views](/guides/views).",
     "tag": "Views",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -4455,12 +4640,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "name",
           "type": "string",
+          "description": "View name, unique in the workspace.",
           "required": false,
           "nullable": false
         },
         {
           "name": "description",
           "type": "string",
+          "description": "What the view is for.",
           "required": false,
           "nullable": false
         },
@@ -4560,6 +4747,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "description": "Attention item id (att_...).",
         "required": true,
         "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
       }
     ],
     "body": null,
@@ -4592,7 +4787,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Create a group",
     "description": "Create a keyword group, then pass its id as `groupId` when creating keywords.\n\n`externalId` is your own id for it; `context` is its company description, read instead of the workspace profile. See [Groups](/guides/groups).",
     "tag": "Groups",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -4729,12 +4933,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "name",
           "type": "string",
+          "description": "Company name.",
           "required": false,
           "nullable": false
         },
         {
           "name": "description",
           "type": "string",
+          "description": "What the company does; the classifier reads it.",
           "required": false,
           "nullable": false
         },
@@ -4792,7 +4998,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Create an API key",
     "description": "Mint an API key for this workspace. The key itself is returned once; only its hash is stored.\n\n`expiresAt` makes it stop working at an instant (a key for a contractor or a one-off script); it stays listed until revoked.",
     "tag": "API keys",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -4894,7 +5109,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Invite a member",
     "description": "Invite someone by email as admin or member; the invitation expires after 48 hours.\n\nIdempotent for an open invitation (200, no second email); a member is 409 already_member. Needs a signed-in owner or admin: API keys get 403.",
     "tag": "Members",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -5074,6 +5298,50 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these keywords (kw_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notGroupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never keywords of these groups (grp_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions or comments from these platforms; keyword-days, which belong to no platform, still count. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "limit",
         "in": "query",
         "type": "integer",
@@ -5100,7 +5368,16 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Create a top-up checkout",
     "description": "Get a hosted checkout URL for a top-up; this call charges nothing.\n\nThe balance is credited within a minute of payment, and paused tracking resumes. `successUrl` must be on a trusted origin; omit it for the dashboard.",
     "tag": "Billing",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
@@ -5232,12 +5509,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "name",
           "type": "string",
+          "description": "Rule name.",
           "required": false,
           "nullable": false
         },
         {
           "name": "enabled",
           "type": "boolean",
+          "description": "false: the rule sends nothing.",
           "required": false,
           "nullable": false
         },
@@ -5321,18 +5600,29 @@ export const OPERATIONS: readonly CliOperation[] = [
     "summary": "Create an alert",
     "description": "Create an alert: a rule (what to watch) sent to channels.\n\n- `mode`: instant, or hourly, daily or weekly digests; hourly never emails.\n- `filter.anyOf` adds OR groups of conditions.\n\nSee [Alerts](/alerts).",
     "tag": "Alerts",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
           "name": "name",
           "type": "string",
+          "description": "Rule name.",
           "required": true,
           "nullable": false
         },
         {
           "name": "enabled",
           "type": "boolean",
+          "description": "false: the rule sends nothing. Default true.",
           "required": false,
           "nullable": false
         },
@@ -5351,6 +5641,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "filter",
           "type": "object",
+          "description": "Which mentions the rule sends. Default: every relevant mention.",
           "required": false,
           "nullable": false
         },
@@ -5394,6 +5685,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "description": "Alert id (feed_...).",
         "required": true,
         "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
       }
     ],
     "body": null,
@@ -5412,6 +5711,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "type": "string",
         "description": "Alert id (feed_...).",
         "required": true,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
         "nullable": false
       }
     ],
@@ -5432,6 +5739,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "type": "string",
         "description": "Alert id (feed_...).",
         "required": true,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
         "nullable": false
       }
     ],
@@ -5464,6 +5779,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "type": "string",
         "description": "Alert id (feed_...).",
         "required": true,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
         "nullable": false
       }
     ],
@@ -5533,6 +5856,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only these platforms. Repeatable, or comma-separated; omit for every platform.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these keyword ids. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never these platforms. Repeatable, or comma-separated.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -5627,6 +5986,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only these platforms. Repeatable, or comma-separated; omit for every platform.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these keyword ids. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never these platforms. Repeatable, or comma-separated.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -5772,6 +6167,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these keyword ids. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never these platforms. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "compare",
         "in": "query",
         "type": "boolean",
@@ -5862,6 +6293,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Only these platforms. Repeatable, or comma-separated; omit for every platform.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these keyword ids. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never these platforms. Repeatable, or comma-separated.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -5980,6 +6447,42 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notKeywordIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these keyword ids. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never these platforms. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "compare",
         "in": "query",
         "type": "boolean",
@@ -6052,6 +6555,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "label",
           "type": "string",
+          "description": "Your name for the channel.",
           "required": false,
           "nullable": false
         },
@@ -6128,6 +6632,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "description": "Channel id (dest_...).",
         "required": true,
         "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
       }
     ],
     "body": null,
@@ -6146,6 +6658,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         "type": "string",
         "description": "Channel id (dest_...).",
         "required": true,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
         "nullable": false
       }
     ],
@@ -6203,12 +6723,22 @@ export const OPERATIONS: readonly CliOperation[] = [
     "path": "/v1/channels",
     "summary": "Create a channel",
     "tag": "Channels",
-    "params": [],
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
     "body": {
       "fields": [
         {
           "name": "kind",
           "type": "string",
+          "description": "Channel kind.",
           "enum": [
             "slack",
             "email",

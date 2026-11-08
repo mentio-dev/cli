@@ -124,10 +124,10 @@ export function operationsFromDocument(doc: OpenApiDocument): CliOperation[] {
           ? 'json'
           : 'none';
       const params: CliField[] = (op.parameters ?? [])
-        .filter((p) => p.in === 'query' || p.in === 'path')
+        .filter((p) => p.in === 'query' || p.in === 'path' || p.in === 'header')
         .map((p) => ({
           name: p.name,
-          in: p.in as 'query' | 'path',
+          in: p.in as 'query' | 'path' | 'header',
           type: fieldType(p.schema),
           description: p.description,
           enum: enumOf(p.schema),

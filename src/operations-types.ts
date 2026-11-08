@@ -3,7 +3,7 @@
 export interface CliField {
   name: string;
   /** Where a parameter travels; absent for body fields. */
-  in?: 'query' | 'path';
+  in?: 'query' | 'path' | 'header';
   type: 'string' | 'number' | 'integer' | 'boolean' | 'array' | 'object';
   description?: string;
   enum?: string[];

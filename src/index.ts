@@ -59,7 +59,7 @@ function registerOperation(op: CliOperation): void {
   const command = program.command(name).description(op.summary).summary(op.summary);
   if (op.description) command.addHelpText('after', `\n${op.description}\n`);
   for (const param of op.params.filter((p) => p.in === 'path')) command.argument(`<${param.name}>`, param.description ?? '');
-  for (const param of op.params.filter((p) => p.in === 'query')) addFieldOption(command, param);
+  for (const param of op.params.filter((p) => p.in === 'query' || p.in === 'header')) addFieldOption(command, param);
   if (op.body) {
     for (const field of op.body.fields) addFieldOption(command, field);
     command.option('--json <object>', 'The whole body as JSON; flags override its fields. "-" reads stdin.');
