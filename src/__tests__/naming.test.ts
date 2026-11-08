@@ -87,6 +87,7 @@ describe('commandName', () => {
         'segments:delete',
         'segments:get',
         'segments:list',
+      'segments:presets',
         'segments:update',
         'system:health',
         'usage:breakdown',

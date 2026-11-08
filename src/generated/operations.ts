@@ -150,7 +150,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "groupId",
+        "name": "groupIds",
         "in": "query",
         "type": "array",
         "description": "Only keywords in any of these groups (grp_...). Repeatable, or comma-separated.",
@@ -158,7 +158,15 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
-        "name": "kind",
+        "name": "notGroupIds",
+        "in": "query",
+        "type": "array",
+        "description": "Never keywords in these groups (grp_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kinds",
         "in": "query",
         "type": "array",
         "description": "Only these kinds: brand, competitor, topic. Repeatable, or comma-separated.",
@@ -171,10 +179,130 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "notKinds",
+        "in": "query",
+        "type": "array",
+        "description": "Never these kinds. Repeatable, or comma-separated.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notStatuses",
+        "in": "query",
+        "type": "array",
+        "description": "Never keywords in these states. Repeatable, or comma-separated.",
+        "enum": [
+          "active",
+          "muted",
+          "paused",
+          "noisy",
+          "capped"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notPlatforms",
+        "in": "query",
+        "type": "array",
+        "description": "Never keywords tracked on any of these platforms (by the same reading as platforms). Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "statuses",
+        "in": "query",
+        "type": "array",
+        "description": "Only keywords in these states: active, muted, paused, noisy, capped. Repeatable, or comma-separated.",
+        "enum": [
+          "active",
+          "muted",
+          "paused",
+          "noisy",
+          "capped"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "platforms",
+        "in": "query",
+        "type": "array",
+        "description": "Only keywords tracked on any of these platforms: its term searched there (every platform when its platforms are null), or for appstore and googleplay, an app of that store among its reviewSources. Repeatable, or comma-separated.",
+        "enum": [
+          "bluesky",
+          "hackernews",
+          "github",
+          "stackoverflow",
+          "devto",
+          "reddit",
+          "x",
+          "youtube",
+          "news",
+          "linkedin",
+          "tiktok",
+          "instagram",
+          "facebook",
+          "appstore",
+          "googleplay",
+          "trustpilot",
+          "googlemaps",
+          "rss"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "groupId",
+        "in": "query",
+        "type": "array",
+        "description": "Deprecated: use groupIds, the same filter; both are read as one list.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "kind",
+        "in": "query",
+        "type": "array",
+        "description": "Deprecated: use kinds, the same filter; both are read as one list.",
+        "enum": [
+          "brand",
+          "competitor",
+          "topic"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "status",
         "in": "query",
         "type": "array",
-        "description": "Only keywords in these states: active, muted, paused, capped. Repeatable, or comma-separated.",
+        "description": "Deprecated: use statuses, the same filter; both are read as one list.",
         "enum": [
           "active",
           "muted",
@@ -189,7 +317,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "platform",
         "in": "query",
         "type": "array",
-        "description": "Only keywords tracked on any of these platforms: its term searched there (every platform when its platforms are null), or for appstore and googleplay, an app of that store among its reviewSources. Repeatable, or comma-separated.",
+        "description": "Deprecated: use platforms, the same filter; both are read as one list.",
         "enum": [
           "bluesky",
           "hackernews",
@@ -4062,11 +4190,22 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "listSegmentPresets",
+    "method": "GET",
+    "path": "/v1/segments/presets",
+    "summary": "List segment presets",
+    "description": "Suggested segments to start from, the same for every workspace. Save one with POST /v1/segments and its `filter`.",
+    "tag": "Segments",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "listSegments",
     "method": "GET",
     "path": "/v1/segments",
     "summary": "List segments",
-    "description": "List your saved segments with live member counts, plus presets to start from.\n\nPass a segment id to GET /v1/people for its members. `groupId` reads that group's own segments; each belongs to one scope.",
+    "description": "List your saved segments with live member counts.\n\nPass a segment id to GET /v1/people for its members. `groupId` reads that group's own segments; each belongs to one scope.",
     "tag": "Segments",
     "params": [
       {
@@ -5877,7 +6016,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/channels/{id}",
     "summary": "Get a channel",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [
       {
         "name": "id",
@@ -5896,7 +6035,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/channels/{id}",
     "summary": "Update a channel",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [
       {
         "name": "id",
@@ -5961,7 +6100,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "DELETE",
     "path": "/v1/channels/{id}",
     "summary": "Delete a channel",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [
       {
         "name": "id",
@@ -5980,7 +6119,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/channels/{id}/test",
     "summary": "Send a test to a channel",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [
       {
         "name": "id",
@@ -5999,7 +6138,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/channels/{id}/rotate-secret",
     "summary": "Rotate a webhook secret",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [
       {
         "name": "id",
@@ -6018,7 +6157,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/channels/{id}/deliveries",
     "summary": "List deliveries to a channel",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [
       {
         "name": "id",
@@ -6053,7 +6192,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "GET",
     "path": "/v1/channels",
     "summary": "List channels",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [],
     "body": null,
     "response": "json"
@@ -6063,7 +6202,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/channels",
     "summary": "Create a channel",
-    "tag": "Alerts",
+    "tag": "Channels",
     "params": [],
     "body": {
       "fields": [
