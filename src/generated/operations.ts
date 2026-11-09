@@ -902,11 +902,49 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "json"
   },
   {
+    "operationId": "updateMentions",
+    "method": "POST",
+    "path": "/v1/mentions/batch",
+    "summary": "Update many mentions",
+    "description": "Change up to 100 mentions at once: status, assignee, labels to add or remove.\n\n- All of it lands, or none of it.\n- Unknown ids come back in `notFound`.\n- Removals run before additions. See [Labels and automations](/guides/labels).",
+    "tag": "Mentions",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "ids",
+          "type": "array",
+          "description": "Mention ids (mm_...), 1 to 100: a page of GET /v1/mentions.",
+          "required": true,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "update",
+          "type": "object",
+          "description": "Every field is optional, at least one is required; omitted fields are untouched.",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
     "operationId": "updateMention",
     "method": "PATCH",
     "path": "/v1/mentions/{id}",
     "summary": "Update a mention",
-    "description": "Triage, assign, snooze, annotate or correct the classification of a mention.\n\n- `relevant` and `sentiment` are your verdict; every list, digest and report follows it. null restores the classifier's.\n- Omitted fields stay. Delivery and billing never change.",
+    "description": "Triage, assign, snooze, label, annotate or correct the classification of a mention.\n\n- `relevant` and `sentiment` are your verdict; null restores the classifier's.\n- `labels` replaces the whole list.\n- Omitted fields stay. Delivery and billing never change.",
     "tag": "Mentions",
     "params": [
       {
@@ -953,6 +991,14 @@ export const OPERATIONS: readonly CliOperation[] = [
           "description": "Internal note; null or empty clears it.",
           "required": false,
           "nullable": true
+        },
+        {
+          "name": "labels",
+          "type": "array",
+          "description": "Replaces the mention's whole list of labels (exact, case-sensitive, at most 20); [] removes every label. To add or remove a few without reading first, use POST /v1/mentions/batch.",
+          "required": false,
+          "nullable": false,
+          "items": "string"
         },
         {
           "name": "relevant",
@@ -1433,6 +1479,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never authors tagged with any of these, in the workspace's tags or those of the mention's own keyword group.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "labels",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions carrying any of these labels (exact, case-sensitive). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLabels",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions carrying any of these labels. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -2194,6 +2256,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never authors tagged with any of these, in the workspace's tags or those of the mention's own keyword group.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "labels",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions carrying any of these labels (exact, case-sensitive). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLabels",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions carrying any of these labels. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -2963,6 +3041,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "in": "query",
         "type": "array",
         "description": "Never authors tagged with any of these, in the workspace's tags or those of the mention's own keyword group.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "labels",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions carrying any of these labels (exact, case-sensitive). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notLabels",
+        "in": "query",
+        "type": "array",
+        "description": "Never mentions carrying any of these labels. Repeatable, or comma-separated.",
         "required": false,
         "nullable": false
       },
@@ -4681,6 +4775,186 @@ export const OPERATIONS: readonly CliOperation[] = [
     ],
     "body": null,
     "response": "none"
+  },
+  {
+    "operationId": "listAutomations",
+    "method": "GET",
+    "path": "/v1/automations",
+    "summary": "List automations",
+    "description": "The workspace's automations, in the order they run, oldest first. See [Labels and automations](/guides/labels).",
+    "tag": "Automations",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createAutomation",
+    "method": "POST",
+    "path": "/v1/automations",
+    "summary": "Create an automation",
+    "description": "Act on every new mention a filter selects: add labels, assign a member.\n\n- Runs after scoring and before delivery, so alert rules see its labels.\n- At most 25. Existing mentions are untouched; use POST /v1/mentions/batch. See [Labels and automations](/guides/labels).",
+    "tag": "Automations",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Unique per workspace, case-insensitive.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "description": "false saves it without running it.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Which new mentions it acts on; empty acts on every one.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "actions",
+          "type": "object",
+          "description": "What to do to each mention the filter selects; at least one action.",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getAutomation",
+    "method": "GET",
+    "path": "/v1/automations/{id}",
+    "summary": "Get an automation",
+    "tag": "Automations",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Automation id (atm_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateAutomation",
+    "method": "PATCH",
+    "path": "/v1/automations/{id}",
+    "summary": "Update an automation",
+    "description": "Rename, pause or change an automation. `filter` and `actions` each replace the whole of themselves. A change applies to mentions scored from then on.",
+    "tag": "Automations",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Automation id (atm_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Automation name, unique in the workspace.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "description": "false stops it; true runs it again on new mentions.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Replaces the whole filter.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "actions",
+          "type": "object",
+          "description": "Replaces every action.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteAutomation",
+    "method": "DELETE",
+    "path": "/v1/automations/{id}",
+    "summary": "Delete an automation",
+    "description": "Removes the automation. The labels it added stay on their mentions.",
+    "tag": "Automations",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Automation id (atm_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "listLabels",
+    "method": "GET",
+    "path": "/v1/labels",
+    "summary": "List labels",
+    "description": "Labels in the workspace and how many mentions carry each, the most used first.\n\nA label exists while a mention carries it. Filter mentions with `labels` / `notLabels`.",
+    "tag": "Automations",
+    "params": [
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "offset",
+        "in": "query",
+        "type": "integer",
+        "description": "Skip this many labels.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
   },
   {
     "operationId": "listAttention",
