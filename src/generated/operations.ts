@@ -4913,6 +4913,182 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "createSearch",
+    "method": "POST",
+    "path": "/v1/searches",
+    "summary": "Start a search",
+    "description": "Search a term over the last 24 hours, 7 or 30 days, without a keyword.\n\n- Results are scored and kept apart from your mentions.\n- $0.008 per scored result; the balance must cover `maxCostCents`.\n- See [Search](/guides/search).",
+    "tag": "Searches",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "term",
+          "type": "string",
+          "description": "The word or phrase to search, case-insensitive, matched as the phrase (written joined or as a hashtag counts). Quotes are not needed.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "range",
+          "type": "string",
+          "description": "How far back the search reads, ending now: 24h, 7d or 30d. Instagram reads at most its last 7 days whatever the range.",
+          "enum": [
+            "24h",
+            "7d",
+            "30d"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "platforms",
+          "type": "array",
+          "description": "The platforms to read; omit for every platform that can search a term back in time (bluesky, hackernews, github, stackoverflow, reddit, x, youtube, linkedin, tiktok, instagram, facebook). devto and news have no search and are reported as skipped.",
+          "enum": [
+            "bluesky",
+            "hackernews",
+            "github",
+            "stackoverflow",
+            "devto",
+            "reddit",
+            "x",
+            "youtube",
+            "news",
+            "linkedin",
+            "tiktok",
+            "instagram",
+            "facebook"
+          ],
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "description": "What the term is to you, as on a keyword: brand (your company or product), competitor, or topic (the default). The classifier judges relevance with it.",
+          "enum": [
+            "brand",
+            "competitor",
+            "topic"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "A sentence the classifier reads for this search only, on top of the company profile: what the term means here, what to ignore.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "listSearches",
+    "method": "GET",
+    "path": "/v1/searches",
+    "summary": "List searches",
+    "description": "The workspace's searches, newest first, kept for 30 days.",
+    "tag": "Searches",
+    "params": [
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "nextCursor from the previous page.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "getSearch",
+    "method": "GET",
+    "path": "/v1/searches/{id}",
+    "summary": "Get a search",
+    "description": "Its status, each platform's progress and counts, and what it cost so far.",
+    "tag": "Searches",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Search id (srch_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "listSearchResults",
+    "method": "GET",
+    "path": "/v1/searches/{id}/results",
+    "summary": "List a search's results",
+    "description": "The posts the search found, newest first, with their verdicts.\n\nA verdict is null while it waits; `alreadyInWorkspace` says the post is already one of your mentions. Readable while the search runs.",
+    "tag": "Searches",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Search id (srch_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "nextCursor from the previous page.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minRelevance",
+        "in": "query",
+        "type": "integer",
+        "description": "Only results scored at least this relevant (0 to 100); unscored results are left out when set.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "listAutomations",
     "method": "GET",
     "path": "/v1/automations",
