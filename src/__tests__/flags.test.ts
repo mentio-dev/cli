@@ -61,7 +61,8 @@ describe('buildRequest', () => {
   it('refuses a missing id, a bad --json, and a missing required field', () => {
     expect(() => buildRequest(op('updateMention'), [], {}, undefined)).toThrow('missing <id>');
     expect(() => buildRequest(op('updateMention'), ['mm_1'], {}, '{oops')).toThrow('--json is not valid JSON');
-    expect(() => buildRequest(op('createKeyword'), [], {}, undefined)).toThrow('--term is required');
+    // A keyword takes term OR query (0106), so a view's name is the example.
+    expect(() => buildRequest(op('createView'), [], {}, undefined)).toThrow('--name is required');
     expect(buildRequest(op('createKeyword'), [], { term: 'acme' }, undefined).body).toEqual({ term: 'acme' });
   });
 

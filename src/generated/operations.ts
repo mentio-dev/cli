@@ -17,7 +17,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/keywords",
     "summary": "Track a keyword",
-    "description": "Start tracking a word or phrase; mentions arrive from the next poll.\n\n- $5 a month, charged daily; up to 500 per funded workspace.\n- `matching` filters posts before they are stored, so rejected posts never bill.\n- `cap` limits matched mentions per period.\n\nSee [Keywords](/guides/keywords).",
+    "description": "Start tracking a word or phrase; mentions arrive from the next poll.\n\n- $5 a month, charged daily; up to 500 per funded workspace.\n- `matching` filters posts before storage, rejected posts never bill; `query` writes both as one query.\n- `cap` limits mentions per period.\n\nSee [Keywords](/guides/keywords).",
     "tag": "Keywords",
     "params": [
       {
@@ -34,8 +34,15 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "term",
           "type": "string",
-          "description": "The word or phrase to track, case-insensitive. A multi-word term matches as the phrase or as its words close together (see matching.exactPhrase); wrap it in double quotes for the exact phrase only.",
-          "required": true,
+          "description": "The word or phrase to track, case-insensitive. Required unless `query` is sent. A multi-word term matches as the phrase or as its words close together (see matching.exactPhrase); wrap it in double quotes for the exact phrase only.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "query",
+          "type": "string",
+          "description": "The keyword as one boolean query instead of term and matching, like \"acme cloud\" AND (pricing OR price*) -jobs ([Keywords](/guides/keywords#write-it-as-a-query)):\n\n- Phrases, words, AND, OR, NOT or -word, parentheses, word-end *\n- Compiled into term and the term rules; never sent with them (400).\n- Each alternative starts with the term; else 400 query_needs_one_term.",
+          "required": false,
           "nullable": false
         },
         {
@@ -411,7 +418,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "PATCH",
     "path": "/v1/keywords/{id}",
     "summary": "Update a keyword",
-    "description": "Change a keyword's term, mute, kind, platforms, context, matching rules or mention cap.\n\n- A new `term` is tracked from now on, no look-back; old mentions stay.\n- An empty rule list clears it; `cap` null removes the cap.\n- Changes apply to new mentions only.",
+    "description": "Change a keyword's term, query, mute, kind, platforms, context, matching rules or mention cap.\n\n- A new `term` is tracked from now on, no look-back; old mentions stay.\n- An empty rule list clears it; `cap` null removes the cap.\n- Changes apply to new mentions only.",
     "tag": "Keywords",
     "params": [
       {
@@ -429,7 +436,14 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "term",
           "type": "string",
-          "description": "Renames the keyword: the new term is tracked from now on, with no look-back, keeping its id, settings and old mentions. Double quotes mean the exact phrase only. 409 when its group already tracks it.",
+          "description": "Renames the keyword: the new term is tracked from now on, with no look-back, keeping its id, settings and old mentions. Double quotes mean the exact phrase only. 409 when its group already tracks it. Clears query.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "query",
+          "type": "string",
+          "description": "Rewrites the term (a rename) and the term rules from a boolean query; the other matching fields stay. Never with term or those rules (400). A later hand change of either clears it. See [Keywords](/guides/keywords#write-it-as-a-query).",
           "required": false,
           "nullable": false
         },
@@ -1435,6 +1449,46 @@ export const OPERATIONS: readonly CliOperation[] = [
         "nullable": false
       },
       {
+        "name": "emotions",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions showing any of these emotions toward the keyword (joy, trust, anticipation, surprise, confusion, frustration, anger, fear, sadness, neutral). A mention whose emotion was not judged never passes.",
+        "enum": [
+          "joy",
+          "trust",
+          "anticipation",
+          "surprise",
+          "confusion",
+          "frustration",
+          "anger",
+          "fear",
+          "sadness",
+          "neutral"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notEmotions",
+        "in": "query",
+        "type": "array",
+        "description": "Never these emotions. A mention whose emotion was not judged still passes.",
+        "enum": [
+          "joy",
+          "trust",
+          "anticipation",
+          "surprise",
+          "confusion",
+          "frustration",
+          "anger",
+          "fear",
+          "sadness",
+          "neutral"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
         "name": "intents",
         "in": "query",
         "type": "array",
@@ -1792,10 +1846,12 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "sort",
         "in": "query",
         "type": "string",
-        "description": "newest: by match time, newest first. priority: by attention score, highest first; priority ranks the last 30 days of matches only, older ones stay reachable under newest. Cursors are specific to a sort.",
+        "description": "How to order the list:\n\n- newest: by match time.\n- priority: attention score, last 30 days of matches.\n- reach: author followers, unknown last; counts update, so pages can shift.\n- engagement: likes, reposts, replies and quotes; none last.\n- reach and engagement: the last 30 days unless a window is set.",
         "enum": [
           "newest",
-          "priority"
+          "priority",
+          "reach",
+          "engagement"
         ],
         "required": false,
         "nullable": false
@@ -2207,6 +2263,46 @@ export const OPERATIONS: readonly CliOperation[] = [
           "positive",
           "neutral",
           "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "emotions",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions showing any of these emotions toward the keyword (joy, trust, anticipation, surprise, confusion, frustration, anger, fear, sadness, neutral). A mention whose emotion was not judged never passes.",
+        "enum": [
+          "joy",
+          "trust",
+          "anticipation",
+          "surprise",
+          "confusion",
+          "frustration",
+          "anger",
+          "fear",
+          "sadness",
+          "neutral"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notEmotions",
+        "in": "query",
+        "type": "array",
+        "description": "Never these emotions. A mention whose emotion was not judged still passes.",
+        "enum": [
+          "joy",
+          "trust",
+          "anticipation",
+          "surprise",
+          "confusion",
+          "frustration",
+          "anger",
+          "fear",
+          "sadness",
+          "neutral"
         ],
         "required": false,
         "nullable": false
@@ -2992,6 +3088,46 @@ export const OPERATIONS: readonly CliOperation[] = [
           "positive",
           "neutral",
           "negative"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "emotions",
+        "in": "query",
+        "type": "array",
+        "description": "Only mentions showing any of these emotions toward the keyword (joy, trust, anticipation, surprise, confusion, frustration, anger, fear, sadness, neutral). A mention whose emotion was not judged never passes.",
+        "enum": [
+          "joy",
+          "trust",
+          "anticipation",
+          "surprise",
+          "confusion",
+          "frustration",
+          "anger",
+          "fear",
+          "sadness",
+          "neutral"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notEmotions",
+        "in": "query",
+        "type": "array",
+        "description": "Never these emotions. A mention whose emotion was not judged still passes.",
+        "enum": [
+          "joy",
+          "trust",
+          "anticipation",
+          "surprise",
+          "confusion",
+          "frustration",
+          "anger",
+          "fear",
+          "sadness",
+          "neutral"
         ],
         "required": false,
         "nullable": false
@@ -6496,18 +6632,22 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by:\n\n- platform or keyword.\n- sentiment: unclassified included.\n- intent: a mention can carry several.\n- status: open, ignored, done.\n- hour: weekday and hour of day in `timezone`.\n- person: who posted; anonymous posts are left out.\n- language: ISO 639-1; \"unknown\" if none, \"other\" if unnamed.\n- country: the author's, ISO 3166-1 alpha-2; \"unknown\", \"other\" likewise.\n- subreddit: Reddit posts only; `share` stays of the whole window.",
+        "description": "The dimension to group by:\n\n- platform or keyword.\n- sentiment: unclassified included.\n- emotion: the emotion toward the keyword; \"unclassified\" if not judged.\n- intent: a mention can carry several.\n- status: open, ignored, done.\n- hour: weekday and hour of day in `timezone`.\n- person: who posted; anonymous posts are left out.\n- language: ISO 639-1; \"unknown\" if none, \"other\" if unnamed.\n- country: the author's, ISO 3166-1 alpha-2; \"unknown\", \"other\" likewise.\n- subreddit: Reddit posts only; `share` stays of the whole window.\n- domain: hosts posts link to; a post can carry several.\n- link: URLs posts link to; a post can carry several.\n- hashtag: lowercase, no #; a post can carry several.",
         "enum": [
           "platform",
           "keyword",
           "sentiment",
+          "emotion",
           "intent",
           "status",
           "hour",
           "person",
           "language",
           "country",
-          "subreddit"
+          "subreddit",
+          "domain",
+          "link",
+          "hashtag"
         ],
         "required": true,
         "nullable": false
