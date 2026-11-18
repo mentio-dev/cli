@@ -920,7 +920,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "POST",
     "path": "/v1/mentions/batch",
     "summary": "Update many mentions",
-    "description": "Change up to 100 mentions at once: status, assignee, labels to add or remove.\n\n- All of it lands, or none of it.\n- Unknown ids come back in `notFound`.\n- Removals run before additions. See [Labels and automations](/guides/labels).",
+    "description": "Change many mentions at once: status, assignee, labels to add or remove. Name them by `ids` (up to 100), or by `filter` to act on everything the mentions list would show (Mark all as done).\n\n- By ids, all of it lands or none of it; unknown ids come back in `notFound`.\n- By filter, up to 1,000 a call, newest first: while `nextCursor` comes back, call again with the same filter and that cursor. Mentions matched after the first call are left alone.\n- Removals run before additions. See [Labels and automations](/guides/labels).",
     "tag": "Mentions",
     "params": [
       {
@@ -937,10 +937,24 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "ids",
           "type": "array",
-          "description": "Mention ids (mm_...), 1 to 100: a page of GET /v1/mentions.",
-          "required": true,
+          "description": "Mention ids (mm_...), 1 to 100: a page of GET /v1/mentions. Send ids or filter, never both.",
+          "required": false,
           "nullable": false,
           "items": "string"
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Instead of ids: act on every mention these filters select, up to 1000 a call, newest first. While nextCursor comes back, call again with the same filter and that cursor; the set is fixed when the first call runs, so mentions arriving meanwhile are left alone.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "cursor",
+          "type": "string",
+          "description": "With filter only: nextCursor from the previous call, to carry on where it stopped.",
+          "required": false,
+          "nullable": false
         },
         {
           "name": "update",
