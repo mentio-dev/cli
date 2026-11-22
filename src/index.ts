@@ -3,7 +3,8 @@
  * `noun:verb` command generated from the OpenAPI document at build time
  * (./generated/operations.ts), so the CLI cannot drift from the API. Three
  * commands are hand-written because they are more than one request:
- * auth:*, mentions:watch and mcp:config.
+ * auth:*, mentions:watch and mcp:config; exports:create adds --wait and
+ * --out on top of its generated self (./exports-wait.ts).
  */
 import { Command, Option } from 'commander';
 import { writeFileSync } from 'node:fs';
@@ -19,6 +20,7 @@ import type { CliField, CliOperation } from './operations-types';
 import { formatOutput } from './output';
 import { BEARER, clientFor, errorEnvelope, runOperation } from './run';
 import { watchMentions } from './watch';
+import { ExportWaitError, downloadExport, waitForExport, type ExportState } from './exports-wait';
 
 const program = new Command();
 
@@ -65,6 +67,12 @@ function registerOperation(op: CliOperation): void {
     command.option('--json <object>', 'The whole body as JSON; flags override its fields. "-" reads stdin.');
   }
   if (op.response === 'csv') command.option('--out <file>', 'Write the CSV to a file instead of stdout.');
+  const isCreateExport = op.operationId === 'createExport';
+  if (isCreateExport) {
+    command.option('--wait', 'Wait until the export is ready (polls exports:get) and print it, download link included.');
+    command.option('--out <file>', 'With --wait: download the file here.');
+    command.option('--timeout <seconds>', 'With --wait: give up after this long.', '1800');
+  }
   command.action(async (...args: unknown[]) => {
     const cmd = args[args.length - 1] as Command;
     const positional = args.slice(0, -2) as string[];
@@ -77,6 +85,10 @@ function registerOperation(op: CliOperation): void {
       const settings = settingsOrFail(globals, op.operationId !== 'getHealth');
       const outcome = await runOperation(clientFor(settings), op, request);
       if (!outcome.ok) fail(errorEnvelope(outcome));
+      if (isCreateExport && (flags.wait === true || typeof flags.out === 'string')) {
+        await finishExport(clientFor(settings), outcome.value as ExportState, flags, globals);
+        return;
+      }
       if (op.response === 'csv') {
         const csv = typeof outcome.value === 'string' ? outcome.value : '';
         if (typeof flags.out === 'string') {
@@ -93,6 +105,31 @@ function registerOperation(op: CliOperation): void {
       throw err;
     }
   });
+}
+
+/** exports:create --wait [--out file]: poll until ready, then print the
+ *  export or download its file. Progress goes to stderr. */
+async function finishExport(client: ReturnType<typeof clientFor>, created: ExportState, flags: Record<string, unknown>, globals: GlobalFlags): Promise<void> {
+  const seconds = Number(flags.timeout ?? 1800);
+  if (!Number.isFinite(seconds) || seconds < 5) fail({ error: { code: 'usage', message: '--timeout must be at least 5 seconds' } }, 2);
+  try {
+    const ready = await waitForExport({
+      client,
+      id: created.id,
+      intervalMs: 3000,
+      timeoutMs: seconds * 1000,
+      onProgress: (state) => process.stderr.write(`${state.id}: ${state.status}, ${state.stats?.rows ?? 0} rows\n`),
+    });
+    if (typeof flags.out === 'string') {
+      const bytes = await downloadExport({ client, id: ready.id, path: flags.out });
+      print({ ok: true, id: ready.id, file: flags.out, bytes, rows: ready.stats?.rows ?? null }, globals);
+      return;
+    }
+    print(ready, globals);
+  } catch (err) {
+    if (err instanceof ExportWaitError) fail({ error: { code: err.code, message: err.message } });
+    throw err;
+  }
 }
 
 async function readStdin(): Promise<string> {

@@ -5187,6 +5187,424 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "json"
   },
   {
+    "operationId": "createExport",
+    "method": "POST",
+    "path": "/v1/exports",
+    "summary": "Start an export",
+    "description": "Export the mentions a filter selects to a CSV or JSON Lines file, in the background.\n\n- Up to 1,000,000 rows; GET /v1/mentions' filters, viewId included.\n- Poll GET /v1/exports/{id}, then download.\n- Not billed; 2 at once per workspace.\n\nSee [Exports](/guides/exports).",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "resource",
+          "type": "string",
+          "description": "What is exported: mentions.",
+          "enum": [
+            "mentions"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "csv: the spreadsheet columns of GET /v1/mentions/export.csv, text cut at 1,000 characters. jsonl: one whole Mention object per line (newline-delimited JSON), as GET /v1/mentions returns it.",
+          "enum": [
+            "csv",
+            "jsonl"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Which mentions: every filter of GET /v1/mentions, in the same vocabulary (a list as an array or comma-separated), viewId and alertId included. {} is every mention the list shows.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "maxRows",
+          "type": "integer",
+          "description": "Stop after this many rows, newest matched first. At most 1,000,000, the default.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "listExports",
+    "method": "GET",
+    "path": "/v1/exports",
+    "summary": "List exports",
+    "description": "The workspace's exports, newest first, kept 90 days; their files are kept 7.",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "nextCursor from the previous page.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "getExport",
+    "method": "GET",
+    "path": "/v1/exports/{id}",
+    "summary": "Get an export",
+    "description": "Its status and progress. Once succeeded, `download.url` is a signed link to the file valid for an hour; read again for a fresh one.",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export id (exp_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "deleteExport",
+    "method": "DELETE",
+    "path": "/v1/exports/{id}",
+    "summary": "Delete an export",
+    "description": "Deletes the file and the export: its signed links stop working at once. A running export stops.",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export id (exp_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "getExportFile",
+    "method": "GET",
+    "path": "/v1/exports/{id}/file",
+    "summary": "Download an export",
+    "description": "The file of a succeeded export, streamed: CSV (text/csv) or JSON Lines (application/x-ndjson).",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export id (exp_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "csv"
+  },
+  {
+    "operationId": "listExportSchedules",
+    "method": "GET",
+    "path": "/v1/export-schedules",
+    "summary": "List export schedules",
+    "description": "The workspace's recurring exports, oldest first.",
+    "tag": "Exports",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createExportSchedule",
+    "method": "POST",
+    "path": "/v1/export-schedules",
+    "summary": "Create an export schedule",
+    "description": "Export the mentions matched since the last run, hourly, daily or weekly (UTC).\n\n- link: an export.ready webhook event with a signed download link.\n- s3: the file written into your own S3-compatible bucket (S3, R2, GCS, B2, MinIO).\n- At most 10 per workspace.\n\nSee [Exports](/guides/exports).",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Unique per workspace, case-insensitive.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "description": "false saves it without running it.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "csv: the spreadsheet columns of GET /v1/mentions/export.csv, text cut at 1,000 characters. jsonl: one whole Mention object per line (newline-delimited JSON), as GET /v1/mentions returns it.",
+          "enum": [
+            "csv",
+            "jsonl"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Which mentions: every filter of GET /v1/mentions except the window (range, from, to): each run exports the mentions matched since the previous run.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "cadence",
+          "type": "string",
+          "description": "hourly: at five past each UTC hour, the hour before. daily: at hour (UTC), the 24 hours before. weekly: on weekday at hour (UTC), the week before.",
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly"
+          ],
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "hour",
+          "type": "integer",
+          "description": "UTC hour daily and weekly runs start, 0 to 23 (default 6). Ignored for hourly.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "weekday",
+          "type": "string",
+          "description": "Required for weekly; refused otherwise.",
+          "enum": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "destination",
+          "type": "string",
+          "description": "Where each run goes. link: an export.ready event to your webhook channels, with a signed download link. s3: the file written into your own S3-compatible bucket (S3, R2, GCS, B2, MinIO), then the same event.",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getExportSchedule",
+    "method": "GET",
+    "path": "/v1/export-schedules/{id}",
+    "summary": "Get an export schedule",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export schedule id (exs_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateExportSchedule",
+    "method": "PATCH",
+    "path": "/v1/export-schedules/{id}",
+    "summary": "Update an export schedule",
+    "description": "Omitted fields are untouched. A new timing keeps the delta: the next run starts where the last one ended. Enabled again, it starts from the next run.",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export schedule id (exs_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "Schedule name, unique in the workspace.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean",
+          "description": "false stops it; true starts it again from the next run.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "format",
+          "type": "string",
+          "description": "csv: the spreadsheet columns of GET /v1/mentions/export.csv, text cut at 1,000 characters. jsonl: one whole Mention object per line (newline-delimited JSON), as GET /v1/mentions returns it.",
+          "enum": [
+            "csv",
+            "jsonl"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "filter",
+          "type": "object",
+          "description": "Replaces the whole filter.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "cadence",
+          "type": "string",
+          "description": "hourly: at five past each UTC hour, the hour before. daily: at hour (UTC), the 24 hours before. weekly: on weekday at hour (UTC), the week before.",
+          "enum": [
+            "hourly",
+            "daily",
+            "weekly"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "hour",
+          "type": "integer",
+          "description": "UTC hour daily and weekly runs start, 0 to 23 (default 6). Ignored for hourly.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "weekday",
+          "type": "string",
+          "description": "Weekly runs: the day; null clears it (only when the cadence is no longer weekly).",
+          "enum": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+          ],
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "destination",
+          "type": "string",
+          "description": "Replaces the destination. An s3 one may leave secretAccessKey out to keep the stored secret.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteExportSchedule",
+    "method": "DELETE",
+    "path": "/v1/export-schedules/{id}",
+    "summary": "Delete an export schedule",
+    "description": "It stops; the exports it already made stay until they age out.",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export schedule id (exs_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "testExportSchedule",
+    "method": "POST",
+    "path": "/v1/export-schedules/{id}/test",
+    "summary": "Test an export schedule's bucket",
+    "description": "Writes a tiny text file to the bucket with the stored credentials.\n\nA mistake shows now rather than at the first run; a link destination has nothing to test.",
+    "tag": "Exports",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Export schedule id (exs_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "listAutomations",
     "method": "GET",
     "path": "/v1/automations",
@@ -7325,7 +7743,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "keyword.noisy",
             "channel.failing",
             "feed.failing",
-            "feed.recovered"
+            "feed.recovered",
+            "export.ready"
           ],
           "required": false,
           "nullable": false,
@@ -7515,7 +7934,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "keyword.resumed",
             "wallet.low",
             "wallet.paused",
-            "wallet.resumed"
+            "wallet.resumed",
+            "export.ready"
           ],
           "required": false,
           "nullable": false,
