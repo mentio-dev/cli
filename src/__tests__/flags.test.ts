@@ -69,7 +69,7 @@ describe('buildRequest', () => {
   it('flattens a discriminated body into one field set with the union of kinds', () => {
     const channel = op('createChannel');
     const kind = channel.body?.fields.find((f) => f.name === 'kind');
-    expect(kind?.enum).toEqual(['slack', 'email', 'webhook']);
+    expect(kind?.enum).toEqual(['slack', 'email', 'webhook', 'discord', 'teams']);
     expect(kind?.required).toBe(false);
     const request = buildRequest(channel, [], { kind: 'email', emails: 'ops@example.com' }, undefined);
     expect(request.body).toEqual({ kind: 'email', emails: ['ops@example.com'] });
