@@ -6226,7 +6226,7 @@ export const OPERATIONS: readonly CliOperation[] = [
     "method": "DELETE",
     "path": "/v1/groups/{id}",
     "summary": "Delete a group and its keywords",
-    "description": "Delete a group and EVERY keyword in it, with their mentions.\n\nAlert rules naming them are adjusted; charges stay on the usage record. The default group cannot be deleted. The group's `stats.keywords` says how many go.",
+    "description": "Delete a group, EVERY keyword in it (with their mentions) and every tracked account in it (with its followers).\n\nAlert rules naming them are adjusted; charges stay on the usage record. The default group cannot be deleted. The group's `stats.keywords` says how many go.",
     "tag": "Groups",
     "params": [
       {
@@ -6240,6 +6240,255 @@ export const OPERATIONS: readonly CliOperation[] = [
     ],
     "body": null,
     "response": "none"
+  },
+  {
+    "operationId": "listAccounts",
+    "method": "GET",
+    "path": "/v1/accounts",
+    "summary": "List tracked accounts",
+    "description": "The accounts the workspace tracks for new followers, newest first.\n\nEach carries its follower count, the new followers billed this month and the poll state. An account costs $2 a month, a new follower $0.008. See [Followers](/guides/followers).",
+    "tag": "Accounts",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createAccount",
+    "method": "POST",
+    "path": "/v1/accounts",
+    "summary": "Track an account",
+    "description": "Start tracking an account's followers.\n\nThe first read is the baseline, never billed. Then each new follower bills $0.008 and each poll that finds some sends one `followers.new` event. `cap.followers` bounds a month. See [Followers](/guides/followers).",
+    "tag": "Accounts",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "platform",
+          "type": "string",
+          "description": "x, bluesky or github. instagram is refused for now (a 400): its follower list is not readable newest first.",
+          "enum": [
+            "x",
+            "instagram",
+            "bluesky",
+            "github"
+          ],
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "handle",
+          "type": "string",
+          "description": "The handle on the platform, with or without the @; a profile link works too (https://x.com/acme, https://bsky.app/profile/acme.bsky.social).",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "groupId",
+          "type": "string",
+          "description": "The keyword group it belongs to (grp_...); omit for the default group.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "cap",
+          "type": "object",
+          "description": "A monthly cap on billed new followers; omit or null for none.",
+          "required": false,
+          "nullable": true
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getAccount",
+    "method": "GET",
+    "path": "/v1/accounts/{id}",
+    "summary": "Get a tracked account",
+    "tag": "Accounts",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Tracked account id (acc_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateAccount",
+    "method": "PATCH",
+    "path": "/v1/accounts/{id}",
+    "summary": "Update a tracked account",
+    "description": "Pause, resume, move or cap a tracked account.\n\n- `muted`: a paused account is neither read nor charged.\n- `groupId`: move it to another keyword group.\n- `cap`: the monthly follower cap; null removes it, a raise resumes it.",
+    "tag": "Accounts",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Tracked account id (acc_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "muted",
+          "type": "boolean",
+          "description": "Pause (true) or resume (false) reading and charging it.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "groupId",
+          "type": "string",
+          "description": "Move it to this keyword group (grp_...).",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "cap",
+          "type": "object",
+          "description": "Set the monthly follower cap; null removes it.",
+          "required": false,
+          "nullable": true
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteAccount",
+    "method": "DELETE",
+    "path": "/v1/accounts/{id}",
+    "summary": "Stop tracking an account",
+    "description": "The account and the followers seen go; what was already billed stays on the usage record.",
+    "tag": "Accounts",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Tracked account id (acc_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "listAccountFollowers",
+    "method": "GET",
+    "path": "/v1/accounts/{id}/followers",
+    "summary": "List an account's followers",
+    "description": "A tracked account's new followers, newest first, cursor paged.\n\n`includeBaseline=true` adds the ones the first read found. Filter by when they were first seen (`range`, `from`, `to`), their reach (`minFollowers`) or text (`q`).",
+    "tag": "Accounts",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Tracked account id (acc_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "range",
+        "in": "query",
+        "type": "string",
+        "description": "A preset window ending now: 7d is today and the six days before, in `timezone`, as in the analytics reports. Ignored when from or to is given. Omit range, from and to for no window.",
+        "enum": [
+          "7d",
+          "30d",
+          "90d",
+          "365d"
+        ],
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "from",
+        "in": "query",
+        "type": "string",
+        "description": "Start, inclusive: a day (YYYY-MM-DD, from its first moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "to",
+        "in": "query",
+        "type": "string",
+        "description": "End, inclusive: a day (YYYY-MM-DD, to its last moment in `timezone`) or an instant (ISO 8601 with its offset, or epoch ms).",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "timezone",
+        "in": "query",
+        "type": "string",
+        "description": "IANA zone that days in range, from and to are cut in (Europe/Madrid). Default UTC.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "includeBaseline",
+        "in": "query",
+        "type": "boolean",
+        "description": "true: also the followers the first read found. Default false: only new ones.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "minFollowers",
+        "in": "query",
+        "type": "integer",
+        "description": "Only followers with at least this many followers of their own.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "q",
+        "in": "query",
+        "type": "string",
+        "description": "Text in the handle, the name or the bio.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100. Default 50.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "From the previous page's nextCursor.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
   },
   {
     "operationId": "getCompany",
@@ -8334,6 +8583,10 @@ export const OPERATIONS: readonly CliOperation[] = [
             "wallet.low",
             "wallet.paused",
             "wallet.resumed",
+            "followers.new",
+            "account.paused",
+            "account.capped",
+            "account.resumed",
             "mention.spike",
             "sentiment.negative_spike",
             "keyword.noisy",
@@ -8519,7 +8772,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "events",
           "type": "array",
-          "description": "Attention events to receive here, on top of whatever rules send. Omit for none.",
+          "description": "Attention events and followers.new to receive here, on top of whatever rules send. Omit for none.",
           "enum": [
             "mention.spike",
             "sentiment.negative_spike",
@@ -8529,12 +8782,16 @@ export const OPERATIONS: readonly CliOperation[] = [
             "feed.recovered",
             "mention.unanswered_influencer",
             "mention.topic_cluster",
+            "followers.new",
             "keyword.capped",
             "keyword.paused_for_balance",
             "keyword.resumed",
             "wallet.low",
             "wallet.paused",
             "wallet.resumed",
+            "account.paused",
+            "account.capped",
+            "account.resumed",
             "export.ready"
           ],
           "required": false,

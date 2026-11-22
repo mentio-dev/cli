@@ -8,6 +8,12 @@ describe('commandName', () => {
     expect(new Set(names).size).toBe(names.length);
     expect(names.sort()).toEqual(
       [
+        'accounts:create',
+        'accounts:delete',
+        'accounts:followers',
+        'accounts:get',
+        'accounts:list',
+        'accounts:update',
         'alerts:create',
         'alerts:delete',
         'alerts:get',
