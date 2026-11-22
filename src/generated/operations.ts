@@ -34,7 +34,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "term",
           "type": "string",
-          "description": "The word or phrase to track, case-insensitive. Required unless `query` is sent. A multi-word term matches as the phrase or as its words close together (see matching.exactPhrase); wrap it in double quotes for the exact phrase only.",
+          "description": "The word or phrase to track, case-insensitive; send exactly one of term, `query` and `subreddit`. A multi-word term also matches its words close together (see matching.exactPhrase); double quotes mean the exact phrase only.",
           "required": false,
           "nullable": false
         },
@@ -42,6 +42,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "query",
           "type": "string",
           "description": "The keyword as one boolean query instead of term and matching, like \"acme cloud\" AND (pricing OR price*) -jobs ([Keywords](/guides/keywords#write-it-as-a-query)):\n\n- Phrases, words, AND, OR, NOT or -word, parentheses, word-end *\n- Compiled into term and the term rules; never sent with them (400).\n- Each alternative starts with the term; else 400 query_needs_one_term.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "subreddit",
+          "type": "object",
+          "description": "Follow a whole subreddit in place of `term`: its new posts are read every 3 hours, named or not. Send no `platforms`; `context` says what to keep. See [Follow a whole subreddit](/platforms/reddit#follow-a-whole-subreddit).",
           "required": false,
           "nullable": false
         },
@@ -60,7 +67,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "platforms",
           "type": "array",
-          "description": "Platforms to search the term on; omit or null for every platform. [] searches it nowhere: a keyword that only collects reviews or reads feeds, which then needs reviewSources or feeds.",
+          "description": "Platforms to search the term on; omit or null for every platform. [] searches it nowhere: a keyword that only collects reviews or reads feeds, which then needs reviewSources or feeds. Not with `subreddit` (its platform is Reddit).",
           "enum": [
             "bluesky",
             "hackernews",
@@ -632,6 +639,13 @@ export const OPERATIONS: readonly CliOperation[] = [
           "name": "readsWorkspaceFeeds",
           "type": "boolean",
           "description": "true: the keyword also reads the workspace's feeds (GET /v1/feeds), live from now on. false: its own feeds alone.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "subreddit",
+          "type": "object",
+          "description": "A keyword that follows a subreddit: what it keeps from now on. The subreddit itself cannot change (create another keyword), and a phrase keyword cannot become one (400).",
           "required": false,
           "nullable": false
         }
