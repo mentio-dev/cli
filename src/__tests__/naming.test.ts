@@ -124,6 +124,16 @@ describe('commandName', () => {
         'views:get',
         'views:list',
         'views:update',
+        'workspace-invitations:create',
+        'workspace-members:list',
+        'workspace-members:remove',
+        'workspaces:create',
+        'workspaces:delete',
+        'workspaces:get',
+        'workspaces:list',
+        'workspaces:transfer',
+        'workspaces:transfers',
+        'workspaces:update',
       ].sort(),
     );
   });

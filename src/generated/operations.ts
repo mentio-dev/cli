@@ -6503,6 +6503,346 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "none"
   },
   {
+    "operationId": "listWorkspaces",
+    "method": "GET",
+    "path": "/v1/workspaces",
+    "summary": "List child workspaces",
+    "description": "The child workspaces your workspace created, oldest first, each with its own wallet, its funding settings and counts. Act inside one by sending its id as the `Mentio-Workspace` header on any other call. See [Agency workspaces](/guides/agency-workspaces).",
+    "tag": "Workspaces",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createWorkspace",
+    "method": "POST",
+    "path": "/v1/workspaces",
+    "summary": "Create a child workspace",
+    "description": "A workspace of its own for a client, apart from yours and your other clients'. It starts with no balance and no welcome credit: fund it with a transfer or `autoRefill`. See [Agency workspaces](/guides/agency-workspaces).",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "The workspace name, 1 to 100 characters.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "externalId",
+          "type": "string",
+          "description": "Your own id for it (a customer id), unique among your workspaces; a second create with the same one is a 409.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "monthlyLimitCents",
+          "type": "integer",
+          "description": "The most you move into it in a UTC calendar month, in USD cents; omit or null for no limit.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "autoRefill",
+          "type": "object",
+          "description": "Refill it from your balance when it runs low; omit or null for off.",
+          "required": false,
+          "nullable": true
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getWorkspace",
+    "method": "GET",
+    "path": "/v1/workspaces/{id}",
+    "summary": "Get a child workspace",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Child workspace id (org_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "updateWorkspace",
+    "method": "PATCH",
+    "path": "/v1/workspaces/{id}",
+    "summary": "Update a child workspace",
+    "description": "Rename it, change its externalId, its monthly limit on transfers in or its automatic refill. Omitted fields stay; null clears.",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Child workspace id (org_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "name",
+          "type": "string",
+          "description": "New name, 1 to 100 characters.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "externalId",
+          "type": "string",
+          "description": "Your own id for it; null clears it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "monthlyLimitCents",
+          "type": "integer",
+          "description": "The monthly ceiling on transfers in, in USD cents; null removes it.",
+          "required": false,
+          "nullable": true
+        },
+        {
+          "name": "autoRefill",
+          "type": "object",
+          "description": "The automatic refill; null turns it off.",
+          "required": false,
+          "nullable": true
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "deleteWorkspace",
+    "method": "DELETE",
+    "path": "/v1/workspaces/{id}",
+    "summary": "Delete a child workspace",
+    "description": "Deletes the workspace with everything in it: keywords, mentions, alerts, channels, API keys, members. Its effective balance comes back to your workspace first, and usage it owes is settled from yours. Cannot be undone.",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Child workspace id (org_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
+    "operationId": "createTransfer",
+    "method": "POST",
+    "path": "/v1/workspaces/{id}/transfers",
+    "summary": "Move money to or from a child workspace",
+    "description": "Moves USD cents between your balance and the child's, one ledger row on each side. The payer's effective balance must cover it; a transfer in counts against the child's monthly limit. Nothing charges a card or pays out. See [Agency workspaces](/guides/agency-workspaces#fund-a-child).",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Child workspace id (org_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "amountCents",
+          "type": "integer",
+          "description": "How much to move, in USD cents (1 to 500000).",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "direction",
+          "type": "string",
+          "description": "to_workspace: from the parent into the child workspace. to_parent: from the child back to the parent.",
+          "enum": [
+            "to_workspace",
+            "to_parent"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "note",
+          "type": "string",
+          "description": "Free text kept on both ledger rows, up to 200 characters.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "listTransfers",
+    "method": "GET",
+    "path": "/v1/workspaces/{id}/transfers",
+    "summary": "List a child workspace's transfers",
+    "description": "Every transfer between your workspace and this child, newest first, automatic refills included.",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Child workspace id (org_...).",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "The nextCursor of the previous page.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Transfers per page, 1 to 100 (default 50).",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "listWorkspaceMembers",
+    "method": "GET",
+    "path": "/v1/workspace-members",
+    "summary": "List members across your workspaces",
+    "description": "Everyone in your workspace or its children, one row per person. Each row lists the workspaces they belong to and their role in each.",
+    "tag": "Workspaces",
+    "params": [],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "createWorkspaceInvitations",
+    "method": "POST",
+    "path": "/v1/workspace-invitations",
+    "summary": "Invite someone to several child workspaces",
+    "description": "Invites one address to several child workspaces, one email each. A member or an open invitation is reported, never sent twice. Needs a signed-in owner or admin, not an API key.",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "email",
+          "type": "string",
+          "description": "The address to invite; it receives one email per workspace with a link to join.",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "description": "The role they join each workspace with.",
+          "enum": [
+            "admin",
+            "member"
+          ],
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "workspaceIds",
+          "type": "array",
+          "description": "The child workspaces (org_...) to invite them to.",
+          "required": true,
+          "nullable": false,
+          "items": "string"
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "removeWorkspaceMember",
+    "method": "DELETE",
+    "path": "/v1/workspace-members/{id}",
+    "summary": "Remove someone from your child workspaces",
+    "description": "Removes the person from every child workspace, or from the ones `workspaceIds` names, or from all but `notWorkspaceIds`. Never from your own workspace (that is DELETE /v1/members/{id}). Needs a signed-in owner or admin, not an API key.",
+    "tag": "Workspaces",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "The person's user id, from GET /v1/workspace-members.",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "name": "workspaceIds",
+        "in": "query",
+        "type": "array",
+        "description": "Only from these child workspaces (org_...); default every child. Never the parent: its own team is managed on /v1/members. Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "notWorkspaceIds",
+        "in": "query",
+        "type": "array",
+        "description": "From every child workspace except these (org_...). Repeatable, or comma-separated.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "none"
+  },
+  {
     "operationId": "getUsage",
     "method": "GET",
     "path": "/v1/usage",
@@ -6525,12 +6865,13 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "by",
         "in": "query",
         "type": "string",
-        "description": "The dimension to group by: day (one row per UTC day of the window), platform, keyword (default: the row a margin is computed from), or group (what a customer or a campaign cost).",
+        "description": "The dimension to group by:\n\n- day: one row per UTC day.\n- platform.\n- keyword (default): where a margin is read.\n- group: what a customer or campaign cost.\n- workspace: your workspace and each child (no filters).",
         "enum": [
           "day",
           "platform",
           "keyword",
-          "group"
+          "group",
+          "workspace"
         ],
         "required": false,
         "nullable": false

@@ -19,6 +19,8 @@ export interface Settings {
   apiUrl: string;
   /** Where the key came from, for `auth:check`. */
   source: 'flag' | 'env' | 'file' | 'none';
+  /** A child workspace (org_...) to act on, sent as Mentio-Workspace: --workspace, else MENTIO_WORKSPACE. */
+  workspace?: string;
 }
 
 export function configDir(env: NodeJS.ProcessEnv = process.env): string {
@@ -63,15 +65,17 @@ export function writeConfig(patch: { apiKey?: string | null; apiUrl?: string | n
 }
 
 export function resolveSettings(
-  flags: { apiKey?: string; apiUrl?: string },
+  flags: { apiKey?: string; apiUrl?: string; workspace?: string },
   env: NodeJS.ProcessEnv = process.env,
 ): Settings {
   const file = readConfig(env);
   const apiUrl = (flags.apiUrl ?? env.MENTIO_API_URL ?? file.apiUrl ?? DEFAULT_API_URL).replace(/\/+$/, '');
-  if (flags.apiKey) return { apiKey: flags.apiKey, apiUrl, source: 'flag' };
-  if (env.MENTIO_API_KEY) return { apiKey: env.MENTIO_API_KEY, apiUrl, source: 'env' };
-  if (file.apiKey) return { apiKey: file.apiKey, apiUrl, source: 'file' };
-  return { apiKey: undefined, apiUrl, source: 'none' };
+  const workspace = (flags.workspace ?? env.MENTIO_WORKSPACE)?.trim();
+  const scoped = workspace ? { workspace } : {};
+  if (flags.apiKey) return { apiKey: flags.apiKey, apiUrl, source: 'flag', ...scoped };
+  if (env.MENTIO_API_KEY) return { apiKey: env.MENTIO_API_KEY, apiUrl, source: 'env', ...scoped };
+  if (file.apiKey) return { apiKey: file.apiKey, apiUrl, source: 'file', ...scoped };
+  return { apiKey: undefined, apiUrl, source: 'none', ...scoped };
 }
 
 /** mk_live_abcd... -> mk_live_abcd, enough to tell keys apart in output. */

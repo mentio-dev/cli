@@ -28,6 +28,7 @@ const program = new Command();
 interface GlobalFlags {
   apiKey?: string;
   apiUrl?: string;
+  workspace?: string;
   pretty?: boolean;
   table?: boolean;
 }
@@ -44,7 +45,7 @@ function fail(envelope: { error: { code: string; message: string } }, code = 1):
 }
 
 function settingsOrFail(globals: GlobalFlags, needsKey: boolean): Settings {
-  const settings = resolveSettings({ apiKey: globals.apiKey, apiUrl: globals.apiUrl });
+  const settings = resolveSettings({ apiKey: globals.apiKey, apiUrl: globals.apiUrl, workspace: globals.workspace });
   if (needsKey && !settings.apiKey) {
     fail({ error: { code: 'no_api_key', message: 'No API key. Run `mentio auth:set --key mk_live_...`, set MENTIO_API_KEY, or pass --api-key.' } }, 2);
   }
@@ -317,6 +318,7 @@ program
   .version(pkg.version, '-V, --version')
   .option('--api-key <key>', 'API key (overrides MENTIO_API_KEY and the stored key)')
   .option('--api-url <url>', 'API host (overrides MENTIO_API_URL and the stored host)')
+  .option('--workspace <id>', 'Act inside one of your child workspaces (org_...), sent as Mentio-Workspace (overrides MENTIO_WORKSPACE)')
   .option('--pretty', 'Indent JSON output (the default on a terminal)')
   .option('--table', 'Render lists as a table')
   .showHelpAfterError('(run with --help for usage)')

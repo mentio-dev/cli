@@ -16,7 +16,13 @@ export interface RunOutcome {
 }
 
 export function clientFor(settings: Settings, fetchImpl?: typeof fetch): Client {
-  return createMentio({ apiKey: settings.apiKey ?? '', baseUrl: settings.apiUrl, ...(fetchImpl ? { fetch: fetchImpl } : {}) }).client;
+  return createMentio({
+    apiKey: settings.apiKey ?? '',
+    baseUrl: settings.apiUrl,
+    // An agency's child workspace: every call acts inside it.
+    ...(settings.workspace ? { headers: { 'Mentio-Workspace': settings.workspace } } : {}),
+    ...(fetchImpl ? { fetch: fetchImpl } : {}),
+  }).client;
 }
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE' | 'PUT';

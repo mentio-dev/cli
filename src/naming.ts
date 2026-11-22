@@ -54,6 +54,11 @@ const NAMED_VERBS: Record<string, string> = {
   getInvoiceUrl: 'invoice-url',
   // The JSON twin of the CSV export, which already owns `export`.
   exportMentionsJson: 'export-json',
+  // Agency workspaces (0114): one path for a child's transfers, two verbs;
+  // a person leaves the children ("remove", like a member).
+  createTransfer: 'transfer',
+  listTransfers: 'transfers',
+  removeWorkspaceMember: 'remove',
 };
 
 /** Resources with one instance per workspace: a GET on the collection path
