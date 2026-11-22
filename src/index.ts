@@ -1,13 +1,13 @@
 /**
  * mentio: the command line for the Mentio API. Every public endpoint is a
  * `noun:verb` command generated from the OpenAPI document at build time
- * (./generated/operations.ts), so the CLI cannot drift from the API. Three
+ * (./generated/operations.ts), so the CLI cannot drift from the API. Four
  * commands are hand-written because they are more than one request:
- * auth:*, mentions:watch and mcp:config; exports:create adds --wait and
- * --out on top of its generated self (./exports-wait.ts).
+ * auth:*, mentions:watch, keywords:import and mcp:config; exports:create adds
+ * --wait and --out on top of its generated self (./exports-wait.ts).
  */
 import { Command, Option } from 'commander';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { hostname } from 'node:os';
 import pkg from '../package.json' with { type: 'json' };
 import { keyPrefix, resolveSettings, writeConfig, type Settings } from './config';
@@ -21,6 +21,7 @@ import { formatOutput } from './output';
 import { BEARER, clientFor, errorEnvelope, runOperation } from './run';
 import { watchMentions } from './watch';
 import { ExportWaitError, downloadExport, waitForExport, type ExportState } from './exports-wait';
+import { ImportError, chunks, keywordRows, lineOfError, resolveGroups } from './keyword-import';
 
 const program = new Command();
 
@@ -242,6 +243,59 @@ function registerWatch(): void {
   });
 }
 
+function registerImport(): void {
+  program
+    .command('keywords:import')
+    .description('Track every keyword of a CSV file, 100 per request (POST /v1/keywords/batch)')
+    .argument('<file>', 'The CSV file, or - for stdin. Header row with term or query, and optionally kind, platforms, group, context, required, excluded.')
+    .option('--dry-run', 'Print the request bodies instead of sending them')
+    .option('--idempotency-key <key>', 'A key per import; each request sends it with its chunk number appended, so a retried import creates nothing twice. After a partial wallet refusal, top up and import the failed rows under a new key.')
+    .action(async (file: string, flags: { dryRun?: boolean; idempotencyKey?: string }) => {
+      const globals = program.opts<GlobalFlags>();
+      try {
+        const text = file === '-' ? await readStdin() : readFileSync(file, 'utf8');
+        let rows = keywordRows(text);
+        if (rows.length === 0) throw new ImportError('No keyword rows under the header.');
+        const settings = settingsOrFail(globals, !flags.dryRun || rows.some((r) => r.groupName !== undefined));
+        const client = clientFor(settings);
+        if (rows.some((r) => r.groupName !== undefined)) {
+          const groups = await client.request({ method: 'GET', url: '/v1/groups', security: BEARER, throwOnError: false });
+          if (groups.error !== undefined || !groups.response?.ok) fail(errorEnvelope({ ok: false, status: groups.response?.status ?? 0, value: groups.error }));
+          rows = resolveGroups(rows, (groups.data as { data: Array<{ id: string; name: string }> }).data);
+        }
+        const parts = chunks(rows);
+        if (flags.dryRun) {
+          print(parts.map((part) => ({ keywords: part.map((r) => r.body) })), globals);
+          return;
+        }
+        const results: Array<{ line: number; status: string; keyword: unknown; error: unknown }> = [];
+        for (const [n, part] of parts.entries()) {
+          const outcome = await client.request({
+            method: 'POST',
+            url: '/v1/keywords/batch',
+            body: { keywords: part.map((r) => r.body) },
+            ...(flags.idempotencyKey ? { headers: { 'Idempotency-Key': `${flags.idempotencyKey}:${n + 1}` } } : {}),
+            security: BEARER,
+            throwOnError: false,
+          });
+          if (outcome.error !== undefined || !outcome.response?.ok) {
+            // Earlier chunks are created already: say how far it got.
+            const envelope = errorEnvelope({ ok: false, status: outcome.response?.status ?? 0, value: outcome.error });
+            const line = lineOfError(envelope.error.message, part);
+            const where = line !== null ? `line ${line}` : `the rows from line ${part[0]!.line}`;
+            fail({ error: { ...envelope.error, message: `${envelope.error.message} (${where}; ${results.filter((r) => r.status === 'created').length} keywords created before it)` } });
+          }
+          const data = (outcome.data as { data: Array<{ index: number; status: string; keyword: unknown; error: unknown }> }).data;
+          for (const r of data) results.push({ line: part[r.index]!.line, status: r.status, keyword: r.keyword, error: r.error });
+        }
+        print({ created: results.filter((r) => r.status === 'created').length, failed: results.filter((r) => r.status === 'failed').length, data: results }, globals);
+      } catch (err) {
+        if (err instanceof ImportError) fail({ error: { code: 'usage', message: err.message } }, 2);
+        throw err;
+      }
+    });
+}
+
 function registerMcp(): void {
   program
     .command('mcp:config')
@@ -271,6 +325,7 @@ program
 registerAuth();
 for (const op of OPERATIONS) registerOperation(op);
 registerWatch();
+registerImport();
 registerMcp();
 
 program.parseAsync(process.argv).catch((err: unknown) => {

@@ -38,6 +38,7 @@ const NAMED_VERBS: Record<string, string> = {
   // Many mentions at once (POST /v1/mentions/batch): the path says batch,
   // the command says what it does.
   updateMentions: 'update-many',
+  createKeywords: 'create-many',
   listPersonActivities: 'activities',
   logPersonActivity: 'log-activity',
   deletePersonActivity: 'delete-activity',

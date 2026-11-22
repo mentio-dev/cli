@@ -419,6 +419,57 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "json"
   },
   {
+    "operationId": "createKeywords",
+    "method": "POST",
+    "path": "/v1/keywords/batch",
+    "summary": "Track many keywords",
+    "description": "Create up to 100 keywords in one call, as POST /v1/keywords would, without reviewSources and feeds.\n\n- Each is created or refused on its own; `data` answers in order.\n- The wallet is checked keyword by keyword; none created for it is a 402.\n\nSee [Keywords](/guides/keywords#add-many-at-once).",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "keywords",
+          "type": "array",
+          "description": "The keywords to create, 1 to 100 (10 before the first top-up), in order. Each is created or refused on its own.",
+          "required": true,
+          "nullable": false,
+          "items": "object"
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "getKeywordDeletionPreview",
+    "method": "GET",
+    "path": "/v1/keywords/{id}/deletion-preview",
+    "summary": "Preview a keyword deletion",
+    "description": "What DELETE /v1/keywords/{id} would remove or change, without changing anything.\n\n- Its mentions and what it cost this month (charges already made stay).\n- Alert rules, automations and views naming it, and the effect on each: disabled, narrowed or empty.",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Keyword id (kw_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "getKeyword",
     "method": "GET",
     "path": "/v1/keywords/{id}",
@@ -5075,11 +5126,13 @@ export const OPERATIONS: readonly CliOperation[] = [
         {
           "name": "range",
           "type": "string",
-          "description": "How far back the search reads, ending now: 24h, 7d or 30d. Instagram reads at most its last 7 days whatever the range.",
+          "description": "How far back the search reads, ending now. See [Search](/guides/search#platforms).\n\n- 24h, 7d, 30d: every platform (instagram at most 7 days).\n- 90d, 365d: only platforms reaching that far; the others are skipped (window).",
           "enum": [
             "24h",
             "7d",
-            "30d"
+            "30d",
+            "90d",
+            "365d"
           ],
           "required": false,
           "nullable": false
@@ -5647,6 +5700,128 @@ export const OPERATIONS: readonly CliOperation[] = [
     "response": "json"
   },
   {
+    "operationId": "createKeywordEstimate",
+    "method": "POST",
+    "path": "/v1/keyword-estimates",
+    "summary": "Estimate keyword volume",
+    "description": "Estimate how many mentions a month up to 10 candidate keywords would bring, and their cost.\n\n- Free by default; `includePaid` also samples paid platforms.\n- Poll until `status` is done. See [Keyword estimates](/guides/keyword-estimates).",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "idempotency-key",
+        "in": "header",
+        "type": "string",
+        "description": "A unique value (a UUID) for this request. Retrying with the same key within 24 hours returns the first response instead of creating twice.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": {
+      "fields": [
+        {
+          "name": "terms",
+          "type": "array",
+          "description": "Up to 10 candidate keywords, each estimated on its own.",
+          "required": true,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "platforms",
+          "type": "array",
+          "description": "The platforms the keyword would track; omit for every platform (what a new keyword tracks).",
+          "enum": [
+            "bluesky",
+            "hackernews",
+            "github",
+            "stackoverflow",
+            "devto",
+            "reddit",
+            "x",
+            "youtube",
+            "news",
+            "linkedin",
+            "tiktok",
+            "instagram",
+            "facebook",
+            "podcasts",
+            "web",
+            "substack",
+            "producthunt",
+            "threads",
+            "mastodon"
+          ],
+          "required": false,
+          "nullable": false,
+          "items": "string"
+        },
+        {
+          "name": "matching",
+          "type": "object",
+          "description": "The rules the keyword would carry, as on a keyword: a sampled post must pass them to count. Omitted fields take the keyword defaults.",
+          "required": false,
+          "nullable": false
+        },
+        {
+          "name": "includePaid",
+          "type": "boolean",
+          "description": "Also sample the paid platforms. See [Keyword estimates](/guides/keyword-estimates#cost).\n\n- false (default): index numbers and free samples only; costs nothing.\n- true: also the paid platforms, 2 to 20 cents per term and platform read; funded only.",
+          "required": false,
+          "nullable": false
+        }
+      ]
+    },
+    "response": "json"
+  },
+  {
+    "operationId": "listKeywordEstimates",
+    "method": "GET",
+    "path": "/v1/keyword-estimates",
+    "summary": "List keyword estimates",
+    "description": "The workspace's estimates, newest first, kept for 30 days.",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "limit",
+        "in": "query",
+        "type": "integer",
+        "description": "Page size, 1 to 100.",
+        "required": false,
+        "nullable": false
+      },
+      {
+        "name": "cursor",
+        "in": "query",
+        "type": "string",
+        "description": "nextCursor from the previous page.",
+        "required": false,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
+    "operationId": "getKeywordEstimate",
+    "method": "GET",
+    "path": "/v1/keyword-estimates/{id}",
+    "summary": "Get a keyword estimate",
+    "description": "Each term's expected matched mentions a month per platform, the monthly cost range, and what the estimate itself cost.",
+    "tag": "Keywords",
+    "params": [
+      {
+        "name": "id",
+        "in": "path",
+        "type": "string",
+        "description": "Estimate id (est_...).",
+        "required": true,
+        "nullable": false
+      }
+    ],
+    "body": null,
+    "response": "json"
+  },
+  {
     "operationId": "listAutomations",
     "method": "GET",
     "path": "/v1/automations",
@@ -5852,7 +6027,7 @@ export const OPERATIONS: readonly CliOperation[] = [
         "name": "kind",
         "in": "query",
         "type": "string",
-        "description": "Only these kinds, comma separated: mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing, feed.failing (feed.recovered never opens an item).",
+        "description": "Only these kinds, comma separated: mention.spike, sentiment.negative_spike, keyword.noisy, channel.failing, feed.failing, mention.unanswered_influencer, mention.topic_cluster (feed.recovered never opens an item).",
         "required": false,
         "nullable": false
       },
@@ -7810,6 +7985,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "channel.failing",
             "feed.failing",
             "feed.recovered",
+            "mention.unanswered_influencer",
+            "mention.topic_cluster",
             "export.ready"
           ],
           "required": false,
@@ -7995,6 +8172,8 @@ export const OPERATIONS: readonly CliOperation[] = [
             "channel.failing",
             "feed.failing",
             "feed.recovered",
+            "mention.unanswered_influencer",
+            "mention.topic_cluster",
             "keyword.capped",
             "keyword.paused_for_balance",
             "keyword.resumed",
